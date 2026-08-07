@@ -53,6 +53,12 @@ jobs:
           --include=src/vernier/canonical/*
           --fail-under=95
 
+      - name: Alignment golden bytes (cross-OS identity)
+        run: >
+          uv run pytest -x
+          tests/test_align.py
+          -k "fixture_alignment_matches_golden_bytes or repeated_runs_byte_identical"
+
   import-minimal:
     name: Import with runtime deps only
     runs-on: ubuntu-latest

@@ -31,6 +31,12 @@ dev = [
 [tool.hatch.build.targets.wheel]
 packages = ["src/vernier", "src/vern"]
 
+[tool.hatch.build.targets.wheel.force-include]
+"src/vernier/align/costs-v1.toml" = "vernier/align/costs-v1.toml"
+
+[tool.hatch.build.targets.sdist.force-include]
+"src/vernier/align/costs-v1.toml" = "src/vernier/align/costs-v1.toml"
+
 [tool.ruff]
 target-version = "py311"
 line-length = 88

@@ -1,0 +1,5 @@
+# Golden alignment bytes and cost matrices must stay LF on all OSes.
+testdata/** text eol=lf
+*.jcs text eol=lf
+src/vernier/align/*.toml text eol=lf
+*.jsonl text eol=lf

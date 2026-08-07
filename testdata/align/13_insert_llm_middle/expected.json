@@ -1,0 +1,22 @@
+[
+  {
+    "a_idx": null,
+    "b_idx": 0,
+    "relation": "Inserted"
+  },
+  {
+    "a_idx": 0,
+    "b_idx": 1,
+    "relation": "Matched"
+  },
+  {
+    "a_idx": 1,
+    "b_idx": 2,
+    "relation": "Matched"
+  },
+  {
+    "a_idx": 2,
+    "b_idx": 3,
+    "relation": "Matched"
+  }
+]

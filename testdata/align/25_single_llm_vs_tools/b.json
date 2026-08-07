@@ -1,0 +1,1 @@
+[{"kind":"ToolCall","tool_name":"a"},{"kind":"ToolCall","tool_name":"b"},{"kind":"ToolResult"}]

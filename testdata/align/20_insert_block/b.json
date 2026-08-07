@@ -1,0 +1,1 @@
+[{"kind":"LlmTurn"},{"kind":"ToolCall","tool_name":"a"},{"kind":"ToolResult"},{"kind":"ToolCall","tool_name":"b"},{"kind":"ToolResult"},{"kind":"Terminal"}]
