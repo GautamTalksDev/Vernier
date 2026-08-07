@@ -45,9 +45,13 @@ jobs:
         run: >
           uv run pytest -x
           --cov=vernier
-          --cov=vernier.canonical
           --cov-report=term-missing
-          --cov-fail-under=95
+
+      - name: Canonical coverage gate (>=95%)
+        run: >
+          uv run coverage report
+          --include=src/vernier/canonical/*
+          --fail-under=95
 
   import-minimal:
     name: Import with runtime deps only
