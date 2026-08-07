@@ -42,7 +42,16 @@ def activate_from_env() -> RecordStore | None:
     run_id = os.environ.get(_ENV_RUN_ID)
     if not run_dir or not run_id:
         return None
-    store = RecordStore(Path(run_dir), run_id)
+    index_env = os.environ.get("VERNIER_INDEX")
+    if index_env:
+        index_path: Path | None = Path(index_env)
+    else:
+        runs_parent = Path(run_dir).resolve().parent
+        if runs_parent.name == "runs":
+            index_path = runs_parent.parent / "index.sqlite"
+        else:
+            index_path = runs_parent / "index.sqlite"
+    store = RecordStore(Path(run_dir), run_id, index_path=index_path)
     _active = store
     safe_append(
         store,
@@ -64,6 +73,8 @@ def deactivate() -> None:
         kind=EventKind.RUN_END,
         payload={"run_id": store.run_id},
     )
+    with contextlib.suppress(Exception):
+        store.finalize()
     _active = None
 
 
