@@ -24,6 +24,9 @@ class EventKind(StrEnum):
     TOOL_RESULT = "ToolResult"
     TOOL_ERROR = "ToolError"
     ENV_READ = "EnvRead"
+    WALL_CLOCK = "WallClock"
+    RANDOM = "Random"
+    REPLAY_MISS = "ReplayMiss"
     RUN_END = "RunEnd"
     CAPTURE_GAP = "CaptureGap"
 

@@ -1,0 +1,1 @@
+{"command":["/home/gautamtalksdev/projects/Vernier/.venv/bin/python3","/home/gautamtalksdev/projects/Vernier/examples/verify_fixture_agent.py","--scenario","03_fail_http"],"cwd":"/home/gautamtalksdev/projects/Vernier","run_id":"2d277007b17347cca50a5c2fdcc9ab28"}

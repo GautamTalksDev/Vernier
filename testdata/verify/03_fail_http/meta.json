@@ -1,0 +1,11 @@
+{
+  "scenario": "03_fail_http",
+  "original_exit": 1,
+  "command": [
+    "python",
+    "examples/verify_fixture_agent.py",
+    "--scenario",
+    "03_fail_http"
+  ],
+  "expect_fail": true
+}

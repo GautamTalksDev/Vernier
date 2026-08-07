@@ -8,8 +8,10 @@ import contextlib
 import sys
 from typing import Any
 
+from vernier.capture.nondet import install_nondet_hooks, uninstall_nondet_hooks
 from vernier.capture.recorder import activate_from_env, deactivate
 from vernier.capture.transport import install_httpx_hooks, install_requests_hooks
+from vernier.replay.session import activate_replay_from_env
 
 _installed = False
 _hooking = False
@@ -17,16 +19,20 @@ _real_import = builtins.__import__
 
 
 def install() -> None:
-    """Activate the recorder and patch HTTP clients as they are imported."""
+    """Activate the recorder (capture or replay) and patch HTTP clients."""
     global _installed
     if _installed:
         return
     _installed = True
 
-    store = activate_from_env()
+    store = activate_replay_from_env()
     if store is None:
+        store = activate_from_env()
+    if store is None:
+        _installed = False
         return
 
+    install_nondet_hooks()
     if "httpx" in sys.modules:
         install_httpx_hooks()
     if "requests" in sys.modules:
@@ -65,6 +71,8 @@ def _shutdown() -> None:
     global _installed
     with contextlib.suppress(Exception):
         deactivate()
+    with contextlib.suppress(Exception):
+        uninstall_nondet_hooks()
     builtins.__import__ = _real_import
     _installed = False
 

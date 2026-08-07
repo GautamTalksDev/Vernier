@@ -38,6 +38,9 @@ def test_all_event_kinds_present() -> None:
         "ToolResult",
         "ToolError",
         "EnvRead",
+        "WallClock",
+        "Random",
+        "ReplayMiss",
         "RunEnd",
         "CaptureGap",
     }

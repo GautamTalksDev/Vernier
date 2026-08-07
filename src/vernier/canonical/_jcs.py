@@ -123,9 +123,7 @@ def _serialize(obj: Any, parts: list[bytes]) -> None:
         # Coerce subclasses (e.g. IntEnum) back to plain int.
         number = int(obj)
         if number < _INT_MIN or number > _INT_MAX:
-            raise JcsError(
-                f"{number} exceeds safe integer domain for JSON floats"
-            )
+            raise JcsError(f"{number} exceeds safe integer domain for JSON floats")
         parts.append(str(number).encode("ascii"))
         return
     if isinstance(obj, float):
@@ -153,9 +151,7 @@ def _serialize(obj: Any, parts: list[bytes]) -> None:
             if index:
                 parts.append(b",")
             if not isinstance(key, str):
-                raise JcsError(
-                    f"object keys must be str, got {type(key).__name__}"
-                )
+                raise JcsError(f"object keys must be str, got {type(key).__name__}")
             _serialize_str(key, parts)
             parts.append(b":")
             _serialize(value, parts)

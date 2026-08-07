@@ -1,4 +1,4 @@
-"""Local Python tool capture (non-HTTP)."""
+"""Local Python tool capture (non-HTTP) and replay stubs."""
 
 from __future__ import annotations
 
@@ -9,12 +9,15 @@ from collections.abc import Callable, Mapping, MutableMapping
 from typing import Any, TypeVar
 
 from vernier.canonical import digest
+from vernier.canonical._jcs import serialize_jcs
 from vernier.capture.recorder import (
     emit_capture_gap,
     get_store,
     safe_append,
 )
 from vernier.record.schema import EventKind
+from vernier.replay.catalog import tool_call_key
+from vernier.replay.session import get_catalog, record_replay_miss
 
 F = TypeVar("F", bound=Callable[..., Any])
 
@@ -25,30 +28,86 @@ def tool(func: F) -> F:
     @functools.wraps(func)
     def wrapper(*args: Any, **kwargs: Any) -> Any:
         store = get_store()
-        if store is None:
+        catalog = get_catalog()
+        if store is None and catalog is None:
             return func(*args, **kwargs)
 
-        seq = store.next_seq()
-        try:
-            payload = {
-                "channel": "function",
-                "name": func.__qualname__,
-                "args_digest": digest(_jsonable_args(args, kwargs)),
-            }
-            safe_append(
-                store,
-                seq=seq,
-                kind=EventKind.TOOL_CALL,
-                payload=payload,
-            )
-        except Exception as exc:  # noqa: BLE001
-            emit_capture_gap(
-                store,
-                reason="tool_call_record_failed",
-                detail={"error_type": type(exc).__name__, "seq": seq},
-                logical_parent_seq=seq,
-            )
+        args_obj = _jsonable_args(args, kwargs)
+        args_digest = digest(args_obj)
+        name = func.__qualname__
+        key = tool_call_key(name=name, args_digest=args_digest)
 
+        seq = store.next_seq() if store is not None else -1
+        if store is not None:
+            try:
+                payload = {
+                    "channel": "function",
+                    "name": name,
+                    "args_digest": args_digest,
+                }
+                safe_append(
+                    store,
+                    seq=seq,
+                    kind=EventKind.TOOL_CALL,
+                    payload=payload,
+                )
+            except Exception as exc:  # noqa: BLE001
+                emit_capture_gap(
+                    store,
+                    reason="tool_call_record_failed",
+                    detail={"error_type": type(exc).__name__, "seq": seq},
+                    logical_parent_seq=seq,
+                )
+
+        if catalog is not None:
+            stub = catalog.take_tool(key)
+            if stub is None:
+                raise record_replay_miss(
+                    channel="tool",
+                    detail=f"no stub for tool {name!r} args_digest={args_digest}",
+                    logical_parent_seq=seq if seq >= 0 else None,
+                )
+            if not stub.ok:
+                if store is not None:
+                    with contextlib.suppress(Exception):
+                        safe_append(
+                            store,
+                            seq=store.next_seq(),
+                            kind=EventKind.TOOL_ERROR,
+                            payload={
+                                "channel": "function",
+                                "name": name,
+                                "error_type": stub.error_type or "Exception",
+                                "error": stub.error or "",
+                            },
+                            logical_parent_seq=seq,
+                        )
+                raise RuntimeError(stub.error or stub.error_type or "tool error")
+            if store is not None:
+                try:
+                    result_obj = _jsonable(stub.result)
+                    safe_append(
+                        store,
+                        seq=store.next_seq(),
+                        kind=EventKind.TOOL_RESULT,
+                        payload={
+                            "channel": "function",
+                            "name": name,
+                            "result_digest": digest(result_obj),
+                        },
+                        logical_parent_seq=seq,
+                        blob_data=serialize_jcs(result_obj),
+                    )
+                except Exception as exc:  # noqa: BLE001
+                    emit_capture_gap(
+                        store,
+                        reason="tool_result_record_failed",
+                        detail={"error_type": type(exc).__name__, "seq": seq},
+                        logical_parent_seq=seq,
+                    )
+            return stub.result
+
+        assert store is not None
         try:
             result = func(*args, **kwargs)
         except Exception as exc:
@@ -59,7 +118,7 @@ def tool(func: F) -> F:
                     kind=EventKind.TOOL_ERROR,
                     payload={
                         "channel": "function",
-                        "name": func.__qualname__,
+                        "name": name,
                         "error_type": type(exc).__name__,
                         "error": str(exc),
                     },
@@ -68,16 +127,18 @@ def tool(func: F) -> F:
             raise
 
         try:
+            result_obj = _jsonable(result)
             safe_append(
                 store,
                 seq=store.next_seq(),
                 kind=EventKind.TOOL_RESULT,
                 payload={
                     "channel": "function",
-                    "name": func.__qualname__,
-                    "result_digest": digest(_jsonable(result)),
+                    "name": name,
+                    "result_digest": digest(result_obj),
                 },
                 logical_parent_seq=seq,
+                blob_data=serialize_jcs(result_obj),
             )
         except Exception as exc:  # noqa: BLE001
             emit_capture_gap(

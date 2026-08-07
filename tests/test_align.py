@@ -131,9 +131,7 @@ def test_deterministic_tie_break_prefers_lower_source_index() -> None:
     a2 = [AlignEvent(AlignKind.TOOL_CALL, "only_in_a")]
     b2 = [AlignEvent(AlignKind.TOOL_CALL, "only_in_b")]
     # At (1,1): diag=up=left=-2 → DIAG wins.
-    assert align(a2, b2, costs=costs2) == (
-        AlignedPair(0, 0, Relation.SUBSTITUTED),
-    )
+    assert align(a2, b2, costs=costs2) == (AlignedPair(0, 0, Relation.SUBSTITUTED),)
 
 
 def test_refuse_over_max_events() -> None:

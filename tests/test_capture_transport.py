@@ -183,9 +183,7 @@ def test_parallel_seq_deterministic_across_20_runs(
             t.join(timeout=10)
         assert not errors
 
-        req_seqs = [
-            e["seq"] for e in store.read_events() if e["kind"] == "LlmRequest"
-        ]
+        req_seqs = [e["seq"] for e in store.read_events() if e["kind"] == "LlmRequest"]
         seq_patterns.append(req_seqs)
         deactivate()
 
@@ -194,9 +192,7 @@ def test_parallel_seq_deterministic_across_20_runs(
     assert len(seq_patterns[0]) == 4
 
 
-def test_oversize_records_truncation_marker(
-    fake_server: str, record_dir: Path
-) -> None:
+def test_oversize_records_truncation_marker(fake_server: str, record_dir: Path) -> None:
     store = _activate(record_dir)
     with httpx.Client() as client:
         response = client.post(f"{fake_server}/oversize")
@@ -210,9 +206,7 @@ def test_oversize_records_truncation_marker(
     deactivate()
 
 
-def test_malformed_json_does_not_crash(
-    fake_server: str, record_dir: Path
-) -> None:
+def test_malformed_json_does_not_crash(fake_server: str, record_dir: Path) -> None:
     store = _activate(record_dir)
     with httpx.Client() as client:
         response = client.post(f"{fake_server}/malformed")

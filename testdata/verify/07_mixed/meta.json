@@ -1,0 +1,11 @@
+{
+  "scenario": "07_mixed",
+  "original_exit": 0,
+  "command": [
+    "python",
+    "examples/verify_fixture_agent.py",
+    "--scenario",
+    "07_mixed"
+  ],
+  "expect_fail": false
+}

@@ -1,0 +1,11 @@
+{
+  "scenario": "09_tool_heavy",
+  "original_exit": 0,
+  "command": [
+    "python",
+    "examples/verify_fixture_agent.py",
+    "--scenario",
+    "09_tool_heavy"
+  ],
+  "expect_fail": false
+}

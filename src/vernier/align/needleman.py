@@ -58,7 +58,7 @@ def align(
 
     # score[i][j] = best score aligning a[:i] with b[:j]
     # move[i][j]  = chosen predecessor (tie-broken)
-    neg_inf = -10**18
+    neg_inf = -(10**18)
     score = [[0] * (m + 1) for _ in range(n + 1)]
     move: list[list[_Move]] = [[_Move.STOP] * (m + 1) for _ in range(n + 1)]
 

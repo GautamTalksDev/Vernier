@@ -1,0 +1,11 @@
+{
+  "scenario": "02_stream",
+  "original_exit": 0,
+  "command": [
+    "python",
+    "examples/verify_fixture_agent.py",
+    "--scenario",
+    "02_stream"
+  ],
+  "expect_fail": false
+}

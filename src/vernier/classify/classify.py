@@ -337,6 +337,11 @@ def _nonparallel_order_swapped(
 ) -> bool:
     a_calls = [e for e in run_a if e.kind == "ToolCall" and e.tool_name]
     b_calls = [e for e in run_b if e.kind == "ToolCall" and e.tool_name]
+    names_a = [e.tool_name for e in a_calls]
+    names_b = [e.tool_name for e in b_calls]
+    # Identical tool-name sequences cannot be an order swap.
+    if names_a == names_b:
+        return False
     n = len(a_calls)
     m = len(b_calls)
     for i in range(n):

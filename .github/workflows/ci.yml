@@ -65,6 +65,12 @@ jobs:
           tests/test_classify.py
           -k "fixture_severity_and_rule_ids or d04_near_miss or d07_parallel_near_miss"
 
+      - name: Verify fixtures (KT-3 full-stub re-drive)
+        run: >
+          uv run pytest -x
+          tests/test_verify.py
+          -k "verify_fixture_severity_none or hand_edited or replay_miss"
+
   import-minimal:
     name: Import with runtime deps only
     runs-on: ubuntu-latest

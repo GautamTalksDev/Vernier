@@ -1,0 +1,11 @@
+{
+  "scenario": "04_fail_tool",
+  "original_exit": 1,
+  "command": [
+    "python",
+    "examples/verify_fixture_agent.py",
+    "--scenario",
+    "04_fail_tool"
+  ],
+  "expect_fail": true
+}

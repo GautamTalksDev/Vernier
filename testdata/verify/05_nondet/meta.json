@@ -1,0 +1,11 @@
+{
+  "scenario": "05_nondet",
+  "original_exit": 0,
+  "command": [
+    "python",
+    "examples/verify_fixture_agent.py",
+    "--scenario",
+    "05_nondet"
+  ],
+  "expect_fail": false
+}

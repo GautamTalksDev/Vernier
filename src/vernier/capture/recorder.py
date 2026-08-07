@@ -21,6 +21,8 @@ from vernier.record.store import RecordStore
 _ENV_RUN_DIR = "VERNIER_RUN_DIR"
 _ENV_RUN_ID = "VERNIER_RUN_ID"
 _ENV_ACTIVE = "VERNIER_CAPTURE"
+_ENV_COMMAND = "VERNIER_COMMAND_JSON"
+_ENV_CWD = "VERNIER_CWD"
 
 _active: RecordStore | None = None
 
@@ -51,13 +53,34 @@ def activate_from_env() -> RecordStore | None:
             index_path = runs_parent.parent / "index.sqlite"
         else:
             index_path = runs_parent / "index.sqlite"
-    store = RecordStore(Path(run_dir), run_id, index_path=index_path)
+
+    command: list[str] = []
+    raw_cmd = os.environ.get(_ENV_COMMAND)
+    if raw_cmd:
+        import json
+
+        parsed = json.loads(raw_cmd)
+        if isinstance(parsed, list):
+            command = [str(x) for x in parsed]
+    cwd = os.environ.get(_ENV_CWD, "")
+
+    store = RecordStore(
+        Path(run_dir),
+        run_id,
+        index_path=index_path,
+        command=command,
+        cwd=cwd,
+    )
     _active = store
     safe_append(
         store,
         seq=store.next_seq(),
         kind=EventKind.RUN_START,
-        payload={"run_id": run_id},
+        payload={
+            "run_id": run_id,
+            "command": command,
+            "cwd": cwd,
+        },
     )
     return store
 
@@ -76,6 +99,9 @@ def deactivate() -> None:
     with contextlib.suppress(Exception):
         store.finalize()
     _active = None
+    from vernier.replay.session import deactivate_replay
+
+    deactivate_replay()
 
 
 def activate_store(store: RecordStore) -> None:

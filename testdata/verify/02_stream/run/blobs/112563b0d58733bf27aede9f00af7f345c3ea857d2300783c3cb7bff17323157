@@ -1,0 +1,6 @@
+data: {"choices":[{"delta":{"content":"he"}}]}
+
+data: {"choices":[{"delta":{"content":"llo"}}]}
+
+data: [DONE]
+

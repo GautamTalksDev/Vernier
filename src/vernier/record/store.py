@@ -53,6 +53,8 @@ class Manifest:
     record_version: str
     event_count: int
     root_digest: str
+    command: tuple[str, ...] = ()
+    cwd: str = ""
 
 
 @dataclass(frozen=True, slots=True)
@@ -128,6 +130,8 @@ class RecordStore:
         *,
         created_at: str | None = None,
         index_path: Path | None = None,
+        command: list[str] | tuple[str, ...] | None = None,
+        cwd: str | None = None,
     ) -> None:
         self.root = Path(root)
         self.run_id = run_id
@@ -139,6 +143,8 @@ class RecordStore:
         self._stored_bytes = 0
         self._created_at = created_at or _utc_now_iso()
         self._index_path = index_path
+        self._command = tuple(command or ())
+        self._cwd = cwd or ""
         self._finalized = False
 
         self.root.mkdir(parents=True, exist_ok=True)
@@ -255,6 +261,8 @@ class RecordStore:
                 record_version=RECORD_FORMAT_VERSION,
                 event_count=self._event_count,
                 root_digest=root_digest_for_bodies(list(self._event_bodies)),
+                command=self._command,
+                cwd=self._cwd,
             )
             payload = {
                 "run_id": manifest.run_id,
@@ -263,6 +271,8 @@ class RecordStore:
                 "record_version": manifest.record_version,
                 "event_count": manifest.event_count,
                 "root_digest": manifest.root_digest,
+                "command": list(manifest.command),
+                "cwd": manifest.cwd,
             }
             self.manifest_path.write_bytes(serialize_jcs(payload) + b"\n")
             self._finalized = True
@@ -386,6 +396,8 @@ def load_run(root: Path) -> FrozenRun:
             record_version=manifest_obj["record_version"],
             event_count=int(manifest_obj["event_count"]),
             root_digest=manifest_obj["root_digest"],
+            command=tuple(manifest_obj.get("command") or ()),
+            cwd=str(manifest_obj.get("cwd") or ""),
         )
     else:
         manifest = Manifest(
@@ -440,9 +452,7 @@ def verify_run(root: Path) -> VerifyResult:
             payload_obj = json.loads(payload.decode("utf-8"))
             actual_digest = digest(payload_obj)
             if actual_digest != expected_digest:
-                errors.append(
-                    f"seq={envelope.get('seq')}: payload_digest mismatch"
-                )
+                errors.append(f"seq={envelope.get('seq')}: payload_digest mismatch")
             if envelope.get("run_id"):
                 run_id = str(envelope["run_id"])
         except Exception as exc:  # noqa: BLE001 — collect all verify errors

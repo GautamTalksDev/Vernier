@@ -1,0 +1,11 @@
+{
+  "scenario": "06_deep_tools",
+  "original_exit": 0,
+  "command": [
+    "python",
+    "examples/verify_fixture_agent.py",
+    "--scenario",
+    "06_deep_tools"
+  ],
+  "expect_fail": false
+}

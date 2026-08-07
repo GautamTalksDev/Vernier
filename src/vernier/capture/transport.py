@@ -7,6 +7,7 @@ from typing import Any
 
 import httpx
 
+from vernier.capture.bodies import body_digest
 from vernier.capture.recorder import (
     emit_capture_gap,
     get_store,
@@ -14,6 +15,8 @@ from vernier.capture.recorder import (
     record_http_response,
 )
 from vernier.record.store import RecordStore
+from vernier.replay.catalog import http_request_key
+from vernier.replay.session import get_catalog, record_replay_miss
 
 
 def _headers_to_dict(headers: Any) -> dict[str, str]:
@@ -21,6 +24,19 @@ def _headers_to_dict(headers: Any) -> dict[str, str]:
     for key, value in headers.items():
         items[str(key)] = value if isinstance(value, str) else str(value)
     return items
+
+
+class ReplayByteStream(httpx.SyncByteStream):
+    """Re-emit recorded stream chunks verbatim."""
+
+    def __init__(self, chunks: tuple[bytes, ...]) -> None:
+        self._chunks = chunks
+
+    def __iter__(self) -> Iterator[bytes]:
+        yield from self._chunks
+
+    def close(self) -> None:
+        return
 
 
 class CapturingByteStream(httpx.SyncByteStream):
@@ -131,6 +147,54 @@ class CapturingByteStream(httpx.SyncByteStream):
         )
 
 
+def _replay_httpx_response(
+    request: httpx.Request,
+    *,
+    store: RecordStore | None,
+    seq: int,
+    method: str,
+    url: str,
+    body: bytes,
+) -> httpx.Response:
+    catalog = get_catalog()
+    assert catalog is not None
+    key = http_request_key(
+        method=method,
+        url=url,
+        body_digest=body_digest(body),
+    )
+    stub = catalog.take_http(key)
+    if stub is None:
+        raise record_replay_miss(
+            channel="http",
+            detail=f"no stub for {method} {url} key={key}",
+            logical_parent_seq=seq if seq >= 0 else None,
+        )
+    if store is not None:
+        record_http_response(
+            store,
+            request_seq=seq,
+            status=stub.status,
+            headers=stub.headers,
+            body=stub.body,
+            chunks=list(stub.chunks) if stub.stream else None,
+        )
+    header_list = [(k, v) for k, v in stub.headers.items()]
+    if stub.stream:
+        return httpx.Response(
+            status_code=stub.status,
+            headers=header_list,
+            stream=ReplayByteStream(stub.chunks),
+            request=request,
+        )
+    return httpx.Response(
+        status_code=stub.status,
+        headers=header_list,
+        content=stub.body,
+        request=request,
+    )
+
+
 class VernierHttpxTransport(httpx.BaseTransport):
     """httpx transport that records request/response then passes through."""
 
@@ -139,30 +203,47 @@ class VernierHttpxTransport(httpx.BaseTransport):
 
     def handle_request(self, request: httpx.Request) -> httpx.Response:
         store = get_store()
-        if store is None:
+        catalog = get_catalog()
+        if store is None and catalog is None:
             return self._wrapped.handle_request(request)
 
-        seq = store.next_seq()
-        try:
-            body = b""
-            if request.content is not None:
-                body = request.content
-            record_http_request(
-                store,
+        seq = store.next_seq() if store is not None else -1
+        method = request.method
+        url = str(request.url)
+        headers = _headers_to_dict(request.headers)
+        body = b""
+        if request.content is not None:
+            body = request.content
+
+        if store is not None:
+            try:
+                record_http_request(
+                    store,
+                    seq=seq,
+                    method=method,
+                    url=url,
+                    headers=headers,
+                    body=body,
+                )
+            except Exception as exc:  # noqa: BLE001
+                emit_capture_gap(
+                    store,
+                    reason="shim_request_failed",
+                    detail={"error_type": type(exc).__name__, "seq": seq},
+                    logical_parent_seq=seq,
+                )
+
+        if catalog is not None:
+            return _replay_httpx_response(
+                request,
+                store=store,
                 seq=seq,
-                method=request.method,
-                url=str(request.url),
-                headers=_headers_to_dict(request.headers),
+                method=method,
+                url=url,
                 body=body,
             )
-        except Exception as exc:  # noqa: BLE001
-            emit_capture_gap(
-                store,
-                reason="shim_request_failed",
-                detail={"error_type": type(exc).__name__, "seq": seq},
-                logical_parent_seq=seq,
-            )
 
+        assert store is not None
         try:
             response = self._wrapped.handle_request(request)
         except Exception:
@@ -171,15 +252,15 @@ class VernierHttpxTransport(httpx.BaseTransport):
                 reason="transport_error",
                 detail={
                     "seq": seq,
-                    "method": request.method,
-                    "url": str(request.url),
+                    "method": method,
+                    "url": url,
                 },
                 logical_parent_seq=seq,
             )
             raise
 
         try:
-            headers = _headers_to_dict(response.headers)
+            resp_headers = _headers_to_dict(response.headers)
             stream = response.stream
             if isinstance(stream, httpx.SyncByteStream):
                 capturing = CapturingByteStream(
@@ -187,7 +268,7 @@ class VernierHttpxTransport(httpx.BaseTransport):
                     store=store,
                     request_seq=seq,
                     status=response.status_code,
-                    headers=headers,
+                    headers=resp_headers,
                 )
                 return httpx.Response(
                     status_code=response.status_code,
@@ -201,7 +282,7 @@ class VernierHttpxTransport(httpx.BaseTransport):
                 store,
                 request_seq=seq,
                 status=response.status_code,
-                headers=headers,
+                headers=resp_headers,
                 body=content,
                 chunks=None,
             )
@@ -265,14 +346,8 @@ def _wrap_requests_response(
         chunk_size: int = 1, decode_unicode: bool = False
     ) -> Iterator[Any]:
         try:
-            for chunk in original_iter(
-                chunk_size=chunk_size, decode_unicode=False
-            ):
-                data = (
-                    chunk
-                    if isinstance(chunk, bytes)
-                    else str(chunk).encode("utf-8")
-                )
+            for chunk in original_iter(chunk_size=chunk_size, decode_unicode=False):
+                data = chunk if isinstance(chunk, bytes) else str(chunk).encode("utf-8")
                 chunks.append(data)
                 try:
                     store.write_blob(
@@ -289,9 +364,7 @@ def _wrap_requests_response(
                         logical_parent_seq=request_seq,
                     )
                 if decode_unicode:
-                    yield data.decode(
-                        response.encoding or "utf-8", errors="replace"
-                    )
+                    yield data.decode(response.encoding or "utf-8", errors="replace")
                 else:
                     yield data
         finally:
@@ -307,6 +380,65 @@ def _wrap_requests_response(
                 )
 
     response.iter_content = iter_content
+    return response
+
+
+def _replay_requests_response(
+    *,
+    store: RecordStore | None,
+    seq: int,
+    method: str,
+    url: str,
+    body: bytes,
+    want_stream: bool,
+) -> Any:
+    import requests
+
+    catalog = get_catalog()
+    assert catalog is not None
+    key = http_request_key(
+        method=method,
+        url=url,
+        body_digest=body_digest(body),
+    )
+    stub = catalog.take_http(key)
+    if stub is None:
+        raise record_replay_miss(
+            channel="http",
+            detail=f"no stub for {method} {url} key={key}",
+            logical_parent_seq=seq if seq >= 0 else None,
+        )
+    if store is not None:
+        record_http_response(
+            store,
+            request_seq=seq,
+            status=stub.status,
+            headers=stub.headers,
+            body=stub.body,
+            chunks=list(stub.chunks) if stub.stream else None,
+        )
+
+    response = requests.models.Response()
+    response.status_code = stub.status
+    response.headers.update(stub.headers)
+    response._content = stub.body  # noqa: SLF001
+    response.url = url
+    response.encoding = "utf-8"
+
+    if want_stream or stub.stream:
+        chunk_list = list(stub.chunks) if stub.chunks else [stub.body]
+
+        def iter_content(
+            chunk_size: int = 1, decode_unicode: bool = False
+        ) -> Iterator[Any]:
+            del chunk_size
+            for data in chunk_list:
+                if decode_unicode:
+                    yield data.decode("utf-8", errors="replace")
+                else:
+                    yield data
+
+        object.__setattr__(response, "iter_content", iter_content)
     return response
 
 
@@ -347,30 +479,43 @@ def install_requests_hooks() -> None:
 
     def send(self: HTTPAdapter, request: Any, **kwargs: Any) -> Any:
         store = get_store()
-        if store is None:
+        catalog = get_catalog()
+        if store is None and catalog is None:
             return original_send(self, request, **kwargs)
 
-        seq = store.next_seq()
-        try:
-            body = request.body or b""
-            if isinstance(body, str):
-                body = body.encode("utf-8")
-            record_http_request(
-                store,
+        seq = store.next_seq() if store is not None else -1
+        body = request.body or b""
+        if isinstance(body, str):
+            body = body.encode("utf-8")
+        if store is not None:
+            try:
+                record_http_request(
+                    store,
+                    seq=seq,
+                    method=request.method,
+                    url=request.url,
+                    headers=_headers_to_dict(request.headers),
+                    body=body,
+                )
+            except Exception as exc:  # noqa: BLE001
+                emit_capture_gap(
+                    store,
+                    reason="shim_request_failed",
+                    detail={"error_type": type(exc).__name__, "seq": seq},
+                    logical_parent_seq=seq,
+                )
+
+        if catalog is not None:
+            return _replay_requests_response(
+                store=store,
                 seq=seq,
                 method=request.method,
                 url=request.url,
-                headers=_headers_to_dict(request.headers),
                 body=body,
-            )
-        except Exception as exc:  # noqa: BLE001
-            emit_capture_gap(
-                store,
-                reason="shim_request_failed",
-                detail={"error_type": type(exc).__name__, "seq": seq},
-                logical_parent_seq=seq,
+                want_stream=bool(kwargs.get("stream", False)),
             )
 
+        assert store is not None
         want_stream = bool(kwargs.get("stream", False))
         kwargs = dict(kwargs)
         kwargs["stream"] = True
