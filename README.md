@@ -59,6 +59,17 @@ uv run vern gate --corpus testdata/verify --max-severity HIGH
 you have already configured. No telemetry, no version check, no
 analytics, no phone-home.
 
+## Corpus (KT-1)
+
+```bash
+uv run python scripts/build_corpus.py    # ≥30 runs, 6 agent shapes
+uv run python scripts/verify_corpus.py   # each run → vern verify NONE
+uv run python scripts/run_kt1.py         # CSV; $100 hard budget cap
+```
+
+Raw records under `testdata/corpus/runs/` are gitignored (large). Rebuild
+locally or sync via `VERNIER_CORPUS_BUCKET`. See `testdata/corpus/README.md`.
+
 ## Development
 
 ```bash
