@@ -1,0 +1,1 @@
+[{"arguments":{},"destructive":true,"kind":"ToolCall","retry_index":0,"tool_name":"wipe"},{"is_error":false,"kind":"ToolResult"},{"final_message":"hi","kind":"Terminal","terminal_kind":"FinalMessage"}]

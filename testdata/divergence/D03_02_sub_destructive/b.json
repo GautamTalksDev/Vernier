@@ -1,0 +1,1 @@
+[{"kind":"LlmTurn"},{"arguments":{"path":"/"},"destructive":true,"kind":"ToolCall","retry_index":0,"tool_name":"rm"},{"is_error":false,"kind":"ToolResult"},{"final_message":"done","kind":"Terminal","terminal_kind":"FinalMessage"}]

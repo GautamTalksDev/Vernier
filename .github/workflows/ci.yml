@@ -59,6 +59,12 @@ jobs:
           tests/test_align.py
           -k "fixture_alignment_matches_golden_bytes or repeated_runs_byte_identical"
 
+      - name: Divergence fixtures (cross-OS identity)
+        run: >
+          uv run pytest -x
+          tests/test_classify.py
+          -k "fixture_severity_and_rule_ids or d04_near_miss or d07_parallel_near_miss"
+
   import-minimal:
     name: Import with runtime deps only
     runs-on: ubuntu-latest

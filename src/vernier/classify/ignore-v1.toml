@@ -1,0 +1,18 @@
+# Vernier divergence ignore-list — ignore-v1
+# Versioned DATA. Overlay via ./vernier.toml [divergence.ignore].
+# Every applied ignore is listed in the classification report.
+
+[divergence]
+version = "divergence-v1"
+
+[divergence.ignore]
+pointers = [
+  "/request_id",
+  "/trace_id",
+  "/nonce",
+  "/headers/request_id",
+  "/headers/trace_id",
+  "/headers/x-request-id",
+]
+strip_uuid_values = true
+strip_iso_timestamps = true

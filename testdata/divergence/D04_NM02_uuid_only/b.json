@@ -1,0 +1,1 @@
+[{"kind":"LlmTurn"},{"arguments":{"id":"123e4567-e89b-12d3-a456-426614174000","q":"x"},"destructive":false,"kind":"ToolCall","retry_index":0,"tool_name":"search"},{"is_error":false,"kind":"ToolResult"},{"final_message":"done","kind":"Terminal","terminal_kind":"FinalMessage"}]
