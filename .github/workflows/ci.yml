@@ -42,7 +42,12 @@ jobs:
         run: uv run mypy src
 
       - name: Pytest with coverage
-        run: uv run pytest -x --cov=vernier --cov-report=term-missing
+        run: >
+          uv run pytest -x
+          --cov=vernier
+          --cov=vernier.canonical
+          --cov-report=term-missing
+          --cov-fail-under=95
 
   import-minimal:
     name: Import with runtime deps only

@@ -3,3 +3,8 @@ Copyright 2026 Vernier Contributors
 
 This product includes software developed by Vernier Contributors.
 Licensed under the Apache License, Version 2.0.
+
+This product includes number-serialization logic adapted from Anders
+Rundgren's JSON Canonicalization Scheme (JCS) reference implementation
+(https://github.com/cyberphone/json-canonicalization), licensed under the
+Apache License, Version 2.0.
