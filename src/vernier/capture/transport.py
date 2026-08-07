@@ -16,7 +16,8 @@ from vernier.capture.recorder import (
 )
 from vernier.record.store import RecordStore
 from vernier.replay.catalog import http_request_key
-from vernier.replay.session import get_catalog, record_replay_miss
+from vernier.replay.overrides import apply_live_overrides
+from vernier.replay.session import get_catalog, record_replay_miss, stub_http
 
 
 def _headers_to_dict(headers: Any) -> dict[str, str]:
@@ -215,6 +216,19 @@ class VernierHttpxTransport(httpx.BaseTransport):
         if request.content is not None:
             body = request.content
 
+        # Live-diff: rewrite model/prompt before record + live hop.
+        if catalog is not None and not stub_http():
+            overridden = apply_live_overrides(body)
+            if overridden != body:
+                body = overridden
+                request = httpx.Request(
+                    method=request.method,
+                    url=request.url,
+                    headers=request.headers,
+                    content=body,
+                    extensions=request.extensions,
+                )
+
         if store is not None:
             try:
                 record_http_request(
@@ -233,7 +247,7 @@ class VernierHttpxTransport(httpx.BaseTransport):
                     logical_parent_seq=seq,
                 )
 
-        if catalog is not None:
+        if catalog is not None and stub_http():
             return _replay_httpx_response(
                 request,
                 store=store,
@@ -487,6 +501,13 @@ def install_requests_hooks() -> None:
         body = request.body or b""
         if isinstance(body, str):
             body = body.encode("utf-8")
+
+        if catalog is not None and not stub_http():
+            overridden = apply_live_overrides(body)
+            if overridden != body:
+                body = overridden
+                request.body = body
+
         if store is not None:
             try:
                 record_http_request(
@@ -505,7 +526,7 @@ def install_requests_hooks() -> None:
                     logical_parent_seq=seq,
                 )
 
-        if catalog is not None:
+        if catalog is not None and stub_http():
             return _replay_requests_response(
                 store=store,
                 seq=seq,

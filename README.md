@@ -27,6 +27,38 @@ uv sync
 uv run vern --help
 ```
 
+## Quick start
+
+```bash
+# Record an agent run (zero edits to the agent)
+uv run vern record -- python examples/verify_fixture_agent.py --scenario 01_tools_basic
+
+# Live re-drive: LLM live, tools from the record; print a human verdict
+uv run vern diff <run_id> --model gpt-4o-mini
+
+# Machine-readable report
+uv run vern diff <run_id> --json
+
+# CI gate (exit 0 at/below threshold, 1 above, 2 operational error)
+uv run vern gate <run_id> --max-severity MEDIUM
+uv run vern gate --corpus testdata/verify --max-severity HIGH
+```
+
+## Exit codes
+
+| Command | 0 | 1 | 2 |
+| --- | --- | --- | --- |
+| `vern verify` | identical trajectory (severity NONE) | divergence or ReplayMiss | operational error |
+| `vern diff` | no divergence | divergence found | operational error |
+| `vern gate` | severity ≤ `--max-severity` | severity above threshold | operational error |
+| `vern verify-record` | integrity OK | integrity failed | operational error |
+
+## Network guarantee
+
+`vern` makes **ZERO** network requests other than to the model provider
+you have already configured. No telemetry, no version check, no
+analytics, no phone-home.
+
 ## Development
 
 ```bash

@@ -17,7 +17,12 @@ from vernier.capture.recorder import (
 )
 from vernier.record.schema import EventKind
 from vernier.replay.catalog import tool_call_key
-from vernier.replay.session import get_catalog, record_replay_miss
+from vernier.replay.session import (
+    get_catalog,
+    is_live_diff,
+    record_replay_miss,
+    tool_miss_as_error,
+)
 
 F = TypeVar("F", bound=Callable[..., Any])
 
@@ -62,9 +67,16 @@ def tool(func: F) -> F:
         if catalog is not None:
             stub = catalog.take_tool(key)
             if stub is None:
+                detail = f"no stub for tool {name!r} args_digest={args_digest}"
+                if is_live_diff():
+                    raise tool_miss_as_error(
+                        name=name,
+                        detail=detail,
+                        logical_parent_seq=seq if seq >= 0 else None,
+                    )
                 raise record_replay_miss(
                     channel="tool",
-                    detail=f"no stub for tool {name!r} args_digest={args_digest}",
+                    detail=detail,
                     logical_parent_seq=seq if seq >= 0 else None,
                 )
             if not stub.ok:

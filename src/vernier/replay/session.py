@@ -1,4 +1,4 @@
-"""Replay session state (catalog + recording store for the re-drive)."""
+"""Replay / live-diff session state."""
 
 from __future__ import annotations
 
@@ -7,16 +7,29 @@ from pathlib import Path
 
 from vernier.record.store import RecordStore
 from vernier.replay.catalog import ReplayCatalog, load_catalog
-from vernier.replay.miss import ReplayMiss
+from vernier.replay.miss import ReplayMiss, ReplayToolMiss
 
 _ENV_REPLAY = "VERNIER_REPLAY"
+_ENV_DIFF = "VERNIER_DIFF"
 _ENV_SOURCE = "VERNIER_REPLAY_SOURCE"
 
 _catalog: ReplayCatalog | None = None
+_live_diff: bool = False
 
 
 def is_replay() -> bool:
+    """True when a catalog is loaded (full stub or live-diff)."""
     return _catalog is not None
+
+
+def is_live_diff() -> bool:
+    """True when LLM traffic is live and only tools are stubbed."""
+    return _live_diff and _catalog is not None
+
+
+def stub_http() -> bool:
+    """Whether HTTP/LLM calls should be served from the record."""
+    return _catalog is not None and not _live_diff
 
 
 def get_catalog() -> ReplayCatalog | None:
@@ -24,13 +37,16 @@ def get_catalog() -> ReplayCatalog | None:
 
 
 def activate_replay_from_env() -> RecordStore | None:
-    """Activate recording into VERNIER_RUN_DIR while stubbing from source run."""
-    global _catalog
+    """Activate full-stub (``VERNIER_REPLAY=1``) or live-diff (``VERNIER_DIFF=1``)."""
+    global _catalog, _live_diff
     from vernier.capture.recorder import activate_store, safe_append
     from vernier.record.schema import EventKind
 
-    if os.environ.get(_ENV_REPLAY) != "1":
+    live = os.environ.get(_ENV_DIFF) == "1"
+    full = os.environ.get(_ENV_REPLAY) == "1"
+    if not live and not full:
         return None
+
     run_dir = os.environ.get("VERNIER_RUN_DIR")
     run_id = os.environ.get("VERNIER_RUN_ID")
     source = os.environ.get(_ENV_SOURCE)
@@ -39,6 +55,7 @@ def activate_replay_from_env() -> RecordStore | None:
 
     catalog = load_catalog(Path(source))
     _catalog = catalog
+    _live_diff = live
 
     index_env = os.environ.get("VERNIER_INDEX")
     index_path = Path(index_env) if index_env else None
@@ -50,6 +67,7 @@ def activate_replay_from_env() -> RecordStore | None:
         cwd=catalog.cwd,
     )
     activate_store(store)
+    mode = "live_diff" if live else "full_stub"
     safe_append(
         store,
         seq=store.next_seq(),
@@ -59,14 +77,16 @@ def activate_replay_from_env() -> RecordStore | None:
             "command": list(catalog.command),
             "cwd": catalog.cwd,
             "replay_of": catalog.source_run_id,
+            "mode": mode,
         },
     )
     return store
 
 
 def deactivate_replay() -> None:
-    global _catalog
+    global _catalog, _live_diff
     _catalog = None
+    _live_diff = False
 
 
 def record_replay_miss(
@@ -89,3 +109,35 @@ def record_replay_miss(
             logical_parent_seq=logical_parent_seq,
         )
     return ReplayMiss(channel, detail)
+
+
+def tool_miss_as_error(
+    *,
+    name: str,
+    detail: str,
+    logical_parent_seq: int | None = None,
+) -> ReplayToolMiss:
+    """Record ReplayMiss + ToolError and return a typed tool error for the agent."""
+    from vernier.capture.recorder import get_store, safe_append
+    from vernier.record.schema import EventKind
+
+    store = get_store()
+    miss = record_replay_miss(
+        channel="tool",
+        detail=detail,
+        logical_parent_seq=logical_parent_seq,
+    )
+    if store is not None:
+        safe_append(
+            store,
+            seq=store.next_seq(),
+            kind=EventKind.TOOL_ERROR,
+            payload={
+                "channel": "function",
+                "name": name,
+                "error_type": "ReplayToolMiss",
+                "error": str(miss),
+            },
+            logical_parent_seq=logical_parent_seq,
+        )
+    return ReplayToolMiss(name=name, detail=detail)

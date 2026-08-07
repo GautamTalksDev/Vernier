@@ -5,55 +5,57 @@ from __future__ import annotations
 import json
 import os
 import subprocess
-import sys
 import uuid
 from pathlib import Path
 from typing import Annotated
 
 import typer
 
-from vernier.align import Relation, align
-from vernier.classify import classify_pair
+from vernier.classify.types import Severity, severity_rank
 from vernier.record.index import (
     DEFAULT_INDEX_PATH,
     list_runs,
     resolve_run_dir,
 )
-from vernier.record.store import DEFAULT_RUNS_DIR, load_run, verify_run
-from vernier.replay.project import project_align_events, project_run
+from vernier.record.store import DEFAULT_RUNS_DIR, verify_run
+from vernier.replay.redrive import (
+    all_matched,
+    index_beside,
+    redrive,
+    resolve_command,
+    write_shim,
+)
+from vernier.report import build_report, render_human, report_to_jcs
+
+NETWORK_GUARANTEE = (
+    "Network guarantee: vern makes ZERO network requests other than to the "
+    "model provider you have already configured. No telemetry, no version "
+    "check, no analytics, no phone-home."
+)
 
 app = typer.Typer(
     name="vern",
-    help="Vernier: deterministic capture, replay, and divergence classification.",
+    help=(
+        "Vernier: deterministic capture, replay, and divergence classification.\n\n"
+        + NETWORK_GUARANTEE
+    ),
     no_args_is_help=True,
 )
 
 
 @app.callback()
 def main() -> None:
-    """Vernier: deterministic capture, replay, and divergence classification."""
+    """Vernier: deterministic capture, replay, and divergence classification.
+
+    Network guarantee: vern makes ZERO network requests other than to the
+    model provider you have already configured. No telemetry, no version
+    check, no analytics, no phone-home.
+    """
 
 
-def _index_beside(runs_dir: Path) -> Path:
-    if runs_dir.name == "runs":
-        return runs_dir.parent / "index.sqlite"
-    return runs_dir / "index.sqlite"
+def _resolve_python(command: list[str]) -> list[str]:
+    import sys
 
-
-def _write_shim(run_dir: Path) -> Path:
-    shim_dir = run_dir / "_shim"
-    shim_dir.mkdir(parents=True, exist_ok=True)
-    sitecustomize = shim_dir / "sitecustomize.py"
-    sitecustomize.write_text(
-        "import vernier.capture.bootstrap as _vernier_bootstrap\n"
-        "_vernier_bootstrap.install()\n",
-        encoding="utf-8",
-        newline="\n",
-    )
-    return shim_dir
-
-
-def _resolve_command(command: list[str]) -> list[str]:
     resolved = list(command)
     if resolved and resolved[0] in {"python", "python3"}:
         resolved[0] = sys.executable
@@ -91,10 +93,10 @@ def record(
     runs_dir = out
     run_dir = runs_dir / run_id
     run_dir.mkdir(parents=True, exist_ok=True)
-    index_path = _index_beside(runs_dir)
-    shim_dir = _write_shim(run_dir)
+    index_path = index_beside(runs_dir)
+    shim_dir = write_shim(run_dir)
 
-    resolved = _resolve_command(command)
+    resolved = _resolve_python(command)
     cwd = str(Path.cwd().resolve())
 
     env = os.environ.copy()
@@ -185,105 +187,294 @@ def verify(
             typer.echo(f"  - {error}", err=True)
         raise typer.Exit(code=1)
 
-    frozen = load_run(source_dir)
-    command = list(frozen.manifest.command)
-    cwd = frozen.manifest.cwd or str(Path.cwd())
-    if not command:
-        # Fall back to RunStart payload.
-        from vernier.record.store import RecordStore
-
-        reader = RecordStore(source_dir, frozen.run_id)
-        for env_row in reader.read_events():
-            if env_row["kind"] == "RunStart":
-                payload = reader.read_payload(env_row)
-                command = [str(x) for x in (payload.get("command") or [])]
-                cwd = str(payload.get("cwd") or cwd)
-                break
-    if not command:
-        typer.echo(
-            "vern verify: recorded run has no command; cannot re-drive",
-            err=True,
-        )
-        raise typer.Exit(code=2)
+    try:
+        resolve_command(source_dir)
+    except ValueError as exc:
+        typer.echo(f"vern verify: {exc}", err=True)
+        raise typer.Exit(code=2) from exc
 
     replay_runs = out or (runs_dir.parent / "verify-runs")
-    replay_id = uuid.uuid4().hex
-    replay_dir = replay_runs / replay_id
-    replay_dir.mkdir(parents=True, exist_ok=True)
-    index_path = _index_beside(replay_runs)
-    shim_dir = _write_shim(replay_dir)
-
-    resolved = _resolve_command(command)
-    env = os.environ.copy()
-    existing = env.get("PYTHONPATH", "")
-    env["PYTHONPATH"] = (
-        str(shim_dir) if not existing else f"{shim_dir}{os.pathsep}{existing}"
-    )
-    env["VERNIER_REPLAY"] = "1"
-    env["VERNIER_REPLAY_SOURCE"] = str(source_dir.resolve())
-    env["VERNIER_RUN_DIR"] = str(replay_dir.resolve())
-    env["VERNIER_RUN_ID"] = replay_id
-    env["VERNIER_INDEX"] = str(index_path.resolve())
-    env["VERNIER_COMMAND_JSON"] = json.dumps(resolved)
-    env["VERNIER_CWD"] = cwd
-    # Capture stays off; replay session opens the store.
-    env.pop("VERNIER_CAPTURE", None)
-    env.setdefault("PYTHONSAFEPATH", "")
-    env.pop("PYTHONNOUSERSITE", None)
-
     typer.echo(f"vern verify: source={run_id}", err=True)
-    typer.echo(f"vern verify: replay_run={replay_id}", err=True)
 
     try:
-        completed = subprocess.run(
-            resolved,
-            env=env,
-            cwd=cwd if Path(cwd).is_dir() else None,
-            check=False,
-            capture_output=True,
-            text=True,
-        )
+        result = redrive(source_dir, out_dir=replay_runs, mode="full_stub")
     except OSError as exc:
         typer.echo(f"vern verify: failed to launch command: {exc}", err=True)
         raise typer.Exit(code=2) from exc
-
-    combined = (completed.stderr or "") + (completed.stdout or "")
-    if "ReplayMiss" in combined or completed.returncode == 3:
-        typer.echo("vern verify: ReplayMiss during re-drive", err=True)
-        if combined.strip():
-            typer.echo(combined.strip(), err=True)
-        raise typer.Exit(code=1)
-
-    try:
-        original_align = project_align_events(source_dir)
-        replay_align = project_align_events(replay_dir)
-        pairs = align(original_align, replay_align)
-        original_traj = project_run(source_dir)
-        replay_traj = project_run(replay_dir)
-        verdict = classify_pair(original_traj, replay_traj)
     except Exception as exc:  # noqa: BLE001
         typer.echo(f"vern verify: comparison failed: {exc}", err=True)
         raise typer.Exit(code=2) from exc
 
-    all_matched = bool(pairs) and all(p.relation is Relation.MATCHED for p in pairs)
-    # Empty both sides is also "identical".
-    if not original_align and not replay_align:
-        all_matched = True
+    typer.echo(f"vern verify: replay_run={result.candidate_run_id}", err=True)
 
-    if all_matched and verdict.severity.value == "NONE" and not verdict.rule_ids:
+    if (
+        "ReplayMiss" in result.agent_output
+        and "ReplayToolMiss" not in result.agent_output
+    ):
+        typer.echo("vern verify: ReplayMiss during re-drive", err=True)
+        if result.agent_output.strip():
+            typer.echo(result.agent_output.strip()[-2000:], err=True)
+        raise typer.Exit(code=1)
+
+    if (
+        all_matched(result.pairs)
+        and result.verdict.severity is Severity.NONE
+        and not result.verdict.rule_ids
+    ):
         typer.echo(
-            f"OK {run_id} severity=NONE matched={len(pairs)}",
+            f"OK {run_id} severity=NONE matched={len(result.pairs)}",
         )
         raise typer.Exit(code=0)
 
     typer.echo(
-        f"FAIL {run_id} severity={verdict.severity.value} "
-        f"rules={list(verdict.rule_ids)} matched_all={all_matched}",
+        f"FAIL {run_id} severity={result.verdict.severity.value} "
+        f"rules={list(result.verdict.rule_ids)} "
+        f"matched_all={all_matched(result.pairs)}",
         err=True,
     )
-    if combined.strip():
-        typer.echo(combined.strip()[-2000:], err=True)
     raise typer.Exit(code=1)
+
+
+@app.command()
+def diff(
+    run_id: Annotated[str, typer.Argument(help="Baseline run id.")],
+    model: Annotated[
+        str | None,
+        typer.Option("--model", help="Override model on live LLM requests."),
+    ] = None,
+    prompt_file: Annotated[
+        Path | None,
+        typer.Option(
+            "--prompt-file",
+            help="Override system prompt from a UTF-8 file.",
+        ),
+    ] = None,
+    runs_dir: Annotated[
+        Path,
+        typer.Option("--runs-dir", help="Directory containing run folders."),
+    ] = DEFAULT_RUNS_DIR,
+    index: Annotated[
+        Path,
+        typer.Option("--index", help="SQLite run index path."),
+    ] = DEFAULT_INDEX_PATH,
+    out: Annotated[
+        Path | None,
+        typer.Option("--out", help="Directory for the live re-drive run."),
+    ] = None,
+    as_json: Annotated[
+        bool,
+        typer.Option("--json", help="Emit vernier-report-v1 JSON (JCS)."),
+    ] = False,
+) -> None:
+    """Live re-drive: LLM live, tools from the record; align and report.
+
+    Exit codes: 0 no divergence (severity NONE, no rules), 1 divergence,
+    2 operational error.
+    """
+    try:
+        source_dir = resolve_run_dir(run_id, runs_dir=runs_dir, index_path=index)
+    except FileNotFoundError as exc:
+        typer.echo(str(exc), err=True)
+        raise typer.Exit(code=2) from exc
+
+    integrity = verify_run(source_dir)
+    if not integrity.ok:
+        typer.echo(f"vern diff: record integrity failed for {run_id}", err=True)
+        for error in integrity.errors:
+            typer.echo(f"  - {error}", err=True)
+        raise typer.Exit(code=2)
+
+    if prompt_file is not None and not prompt_file.is_file():
+        typer.echo(f"vern diff: prompt file not found: {prompt_file}", err=True)
+        raise typer.Exit(code=2)
+
+    try:
+        resolve_command(source_dir)
+    except ValueError as exc:
+        typer.echo(f"vern diff: {exc}", err=True)
+        raise typer.Exit(code=2) from exc
+
+    live_runs = out or (runs_dir.parent / "diff-runs")
+    typer.echo(f"vern diff: source={run_id}", err=True)
+    if model:
+        typer.echo(f"vern diff: model={model}", err=True)
+
+    try:
+        result = redrive(
+            source_dir,
+            out_dir=live_runs,
+            mode="live_diff",
+            model=model,
+            prompt_file=prompt_file,
+        )
+    except OSError as exc:
+        typer.echo(f"vern diff: failed to launch command: {exc}", err=True)
+        raise typer.Exit(code=2) from exc
+    except Exception as exc:  # noqa: BLE001
+        typer.echo(f"vern diff: failed: {exc}", err=True)
+        raise typer.Exit(code=2) from exc
+
+    typer.echo(f"vern diff: candidate={result.candidate_run_id}", err=True)
+
+    report = build_report(
+        source_run_id=result.source_run_id,
+        candidate_run_id=result.candidate_run_id,
+        verdict=result.verdict,
+        pairs=result.pairs,
+        traj_a=result.traj_a,
+        traj_b=result.traj_b,
+    )
+
+    if as_json:
+        typer.echo(report_to_jcs(report).decode("utf-8"), nl=False)
+    else:
+        typer.echo(
+            render_human(
+                source_run_id=result.source_run_id,
+                candidate_run_id=result.candidate_run_id,
+                verdict=result.verdict,
+                pairs=result.pairs,
+                traj_a=result.traj_a,
+                traj_b=result.traj_b,
+            ),
+            nl=False,
+        )
+
+    if (
+        result.verdict.severity is Severity.NONE
+        and not result.verdict.rule_ids
+        and all_matched(result.pairs)
+    ):
+        raise typer.Exit(code=0)
+    raise typer.Exit(code=1)
+
+
+@app.command()
+def gate(
+    run_id: Annotated[
+        str | None,
+        typer.Argument(help="Run id to gate (omit with --corpus)."),
+    ] = None,
+    max_severity: Annotated[
+        str,
+        typer.Option(
+            "--max-severity",
+            help="Fail if verdict severity is above this level.",
+        ),
+    ] = "MEDIUM",
+    corpus: Annotated[
+        Path | None,
+        typer.Option(
+            "--corpus",
+            help="Directory of run folders (or scenario/run fixtures) to gate.",
+        ),
+    ] = None,
+    model: Annotated[
+        str | None,
+        typer.Option("--model", help="Override model for live re-drives."),
+    ] = None,
+    prompt_file: Annotated[
+        Path | None,
+        typer.Option("--prompt-file", help="Override system prompt file."),
+    ] = None,
+    runs_dir: Annotated[
+        Path,
+        typer.Option("--runs-dir", help="Directory containing run folders."),
+    ] = DEFAULT_RUNS_DIR,
+    index: Annotated[
+        Path,
+        typer.Option("--index", help="SQLite run index path."),
+    ] = DEFAULT_INDEX_PATH,
+    out: Annotated[
+        Path | None,
+        typer.Option("--out", help="Directory for live re-drive runs."),
+    ] = None,
+) -> None:
+    """Gate a run (or corpus) by max severity after a live re-drive.
+
+    Exit codes: 0 at or below threshold, 1 above, 2 operational error.
+    """
+    try:
+        threshold = Severity(max_severity.upper())
+    except ValueError as exc:
+        typer.echo(
+            f"vern gate: invalid severity {max_severity!r}; "
+            f"expected one of {[s.value for s in Severity]}",
+            err=True,
+        )
+        raise typer.Exit(code=2) from exc
+
+    targets: list[tuple[str, Path]] = []
+    if corpus is not None:
+        if not corpus.is_dir():
+            typer.echo(f"vern gate: corpus not found: {corpus}", err=True)
+            raise typer.Exit(code=2)
+        for child in sorted(corpus.iterdir()):
+            if not child.is_dir():
+                continue
+            # Fixture layout: <name>/run/ or plain <run_id>/
+            if (child / "run" / "events.jsonl").is_file():
+                targets.append((child.name, child / "run"))
+            elif (child / "events.jsonl").is_file():
+                targets.append((child.name, child))
+        if not targets:
+            typer.echo("vern gate: corpus has no runs", err=True)
+            raise typer.Exit(code=2)
+    else:
+        if not run_id:
+            typer.echo(
+                "Usage: vern gate <run_id> --max-severity MEDIUM\n"
+                "   or: vern gate --corpus <dir> --max-severity MEDIUM",
+                err=True,
+            )
+            raise typer.Exit(code=2)
+        try:
+            source_dir = resolve_run_dir(run_id, runs_dir=runs_dir, index_path=index)
+        except FileNotFoundError as exc:
+            typer.echo(str(exc), err=True)
+            raise typer.Exit(code=2) from exc
+        targets.append((run_id, source_dir))
+
+    live_runs = out or (runs_dir.parent / "gate-runs")
+    worst: Severity = Severity.NONE
+    worst_label = ""
+    failures = 0
+
+    for label, source_dir in targets:
+        integrity = verify_run(source_dir)
+        if not integrity.ok:
+            typer.echo(f"vern gate: integrity failed for {label}", err=True)
+            raise typer.Exit(code=2)
+        try:
+            result = redrive(
+                source_dir,
+                out_dir=live_runs,
+                mode="live_diff",
+                model=model,
+                prompt_file=prompt_file,
+            )
+        except Exception as exc:  # noqa: BLE001
+            typer.echo(f"vern gate: failed on {label}: {exc}", err=True)
+            raise typer.Exit(code=2) from exc
+
+        sev = result.verdict.severity
+        typer.echo(
+            f"{label}: severity={sev.value} rules={list(result.verdict.rule_ids)}"
+        )
+        if severity_rank(sev) > severity_rank(worst):
+            worst = sev
+            worst_label = label
+        if severity_rank(sev) > severity_rank(threshold):
+            failures += 1
+
+    typer.echo(
+        f"vern gate: worst={worst.value}"
+        + (f" ({worst_label})" if worst_label else "")
+        + f" threshold={threshold.value}"
+    )
+    if failures:
+        raise typer.Exit(code=1)
+    raise typer.Exit(code=0)
 
 
 @app.command("ls")
