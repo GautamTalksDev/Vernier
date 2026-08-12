@@ -1,6 +1,6 @@
 [project]
 name = "vernier-cli"
-version = "0.0.1a1"
+version = "0.1.0"
 description = "Deterministic capture, replay, and divergence classification for agent runs."
 readme = "README.md"
 license = "Apache-2.0"
