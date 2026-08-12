@@ -17,7 +17,12 @@ from vernier.capture.recorder import (
 from vernier.record.store import RecordStore
 from vernier.replay.catalog import http_request_key
 from vernier.replay.overrides import apply_live_overrides
+from vernier.replay.request_parity import (
+    HarnessRequestBodyMismatch,
+    check_live_diff_request_parity,
+)
 from vernier.replay.session import get_catalog, record_replay_miss, stub_http
+from vernier.classify.types import HARNESS_FAULT_REQUEST_BODY_MISMATCH
 
 
 def _headers_to_dict(headers: Any) -> dict[str, str]:
@@ -221,13 +226,41 @@ class VernierHttpxTransport(httpx.BaseTransport):
             overridden = apply_live_overrides(body)
             if overridden != body:
                 body = overridden
+                # Drop stale Content-Length — body size changes when model/prompt
+                # is rewritten (httpx would otherwise send the old length).
+                new_headers = [
+                    (k, v)
+                    for k, v in request.headers.multi_items()
+                    if k.lower() != "content-length"
+                ]
                 request = httpx.Request(
                     method=request.method,
                     url=request.url,
-                    headers=request.headers,
+                    headers=new_headers,
                     content=body,
                     extensions=request.extensions,
                 )
+
+            baseline_body = catalog.take_llm_request_body()
+            if baseline_body is not None:
+                turn = catalog.llm_request_turn
+                mismatches = check_live_diff_request_parity(
+                    body,
+                    baseline_body,
+                    turn_index=turn,
+                )
+                if mismatches:
+                    detail = (
+                        f"{HARNESS_FAULT_REQUEST_BODY_MISMATCH} "
+                        f"turn={turn}: " + "; ".join(mismatches)
+                    )
+                    record_replay_miss(
+                        channel="harness",
+                        detail=detail,
+                        logical_parent_seq=seq if seq >= 0 else None,
+                    )
+                    raise HarnessRequestBodyMismatch(detail)
+            catalog.llm_request_turn += 1
 
         if store is not None:
             try:
@@ -260,7 +293,7 @@ class VernierHttpxTransport(httpx.BaseTransport):
         assert store is not None
         try:
             response = self._wrapped.handle_request(request)
-        except Exception:
+        except Exception as exc:
             emit_capture_gap(
                 store,
                 reason="transport_error",
@@ -268,6 +301,8 @@ class VernierHttpxTransport(httpx.BaseTransport):
                     "seq": seq,
                     "method": method,
                     "url": url,
+                    "error_type": type(exc).__name__,
+                    "error": str(exc)[:500],
                 },
                 logical_parent_seq=seq,
             )
@@ -507,6 +542,32 @@ def install_requests_hooks() -> None:
             if overridden != body:
                 body = overridden
                 request.body = body
+                # Keep Content-Length aligned with the rewritten body.
+                if "Content-Length" in request.headers:
+                    request.headers["Content-Length"] = str(len(body))
+                elif "content-length" in request.headers:
+                    request.headers["content-length"] = str(len(body))
+
+            baseline_body = catalog.take_llm_request_body()
+            if baseline_body is not None:
+                turn = catalog.llm_request_turn
+                mismatches = check_live_diff_request_parity(
+                    body,
+                    baseline_body,
+                    turn_index=turn,
+                )
+                if mismatches:
+                    detail = (
+                        f"{HARNESS_FAULT_REQUEST_BODY_MISMATCH} "
+                        f"turn={turn}: " + "; ".join(mismatches)
+                    )
+                    record_replay_miss(
+                        channel="harness",
+                        detail=detail,
+                        logical_parent_seq=seq if seq >= 0 else None,
+                    )
+                    raise HarnessRequestBodyMismatch(detail)
+            catalog.llm_request_turn += 1
 
         if store is not None:
             try:
@@ -542,11 +603,16 @@ def install_requests_hooks() -> None:
         kwargs["stream"] = True
         try:
             response = original_send(self, request, **kwargs)
-        except Exception:
+        except Exception as exc:
             emit_capture_gap(
                 store,
                 reason="transport_error",
-                detail={"seq": seq, "url": request.url},
+                detail={
+                    "seq": seq,
+                    "url": request.url,
+                    "error_type": type(exc).__name__,
+                    "error": str(exc)[:500],
+                },
                 logical_parent_seq=seq,
             )
             raise

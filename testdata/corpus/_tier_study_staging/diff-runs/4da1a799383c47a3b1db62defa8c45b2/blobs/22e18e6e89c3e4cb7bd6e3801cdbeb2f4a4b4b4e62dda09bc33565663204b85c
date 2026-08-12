@@ -1,0 +1,1 @@
+{"patch":"def parser_py():\n    return 42\n","path":"parser.py","status":"edited"}

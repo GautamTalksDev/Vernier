@@ -15,8 +15,14 @@ KT-2: If the classifier cannot agree with hand-labelled ground truth
 KT-3: If a full-stub re-drive of 10 recorded runs of >=8 steps each
       does not produce a 100% action match, the substrate is broken
       and nothing above it means anything.
+KT-3b: If a live-diff re-drive with no model/prompt override (unchanged
+      variable) does not return severity NONE, the live-diff harness is
+      broken by definition and KT-1/KT-2 results are void.
 KT-4: If nobody has put `vern gate` in a CI pipeline unprompted
       within 3 months of launch, there is no business here.
+
+Status: see [`RESULTS.md`](RESULTS.md). Retracted v0 write-up:
+[`RESULTS-v0-RETRACTED.md`](RESULTS-v0-RETRACTED.md).
 
 ## Install
 
@@ -58,6 +64,22 @@ uv run vern gate --corpus testdata/verify --max-severity HIGH
 `vern` makes **ZERO** network requests other than to the model provider
 you have already configured. No telemetry, no version check, no
 analytics, no phone-home.
+
+## CI gate
+
+```bash
+vern init                          # vernier.toml + .github/workflows/vernier-gate.yml
+vern gate --corpus vernier-corpus --max-severity MEDIUM
+```
+
+GitHub Action (zero Vernier secrets — provider key only): see [docs/CI.md](docs/CI.md).
+
+```yaml
+- uses: gautamtalksdev/Vernier@main
+  with:
+    corpus-path: vernier-corpus
+    max-severity: MEDIUM
+```
 
 ## Corpus (KT-1)
 

@@ -1,0 +1,1 @@
+{"channel":"function","error":"tool_weather() missing 1 required positional argument: 'city'","error_type":"TypeError","name":"tool_weather"}

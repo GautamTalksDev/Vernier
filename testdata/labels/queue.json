@@ -1,0 +1,362 @@
+[
+  {
+    "case_id": "b85d161943a18ae4",
+    "run_id": "f2bedf5d5a5b429f98783798ea90c09e",
+    "baseline_model": "vernier-baseline-local-v1",
+    "candidate_model": "vernier-candidate-a"
+  },
+  {
+    "case_id": "e41f565f78528b90",
+    "run_id": "f2bedf5d5a5b429f98783798ea90c09e",
+    "baseline_model": "vernier-baseline-local-v1",
+    "candidate_model": "vernier-candidate-b"
+  },
+  {
+    "case_id": "c0a5cdc26a3ea3bb",
+    "run_id": "b6ffee1fd4fe4b2cb392cd61e890e98c",
+    "baseline_model": "vernier-baseline-local-v1",
+    "candidate_model": "vernier-candidate-a"
+  },
+  {
+    "case_id": "4646ca96315f3ae7",
+    "run_id": "b6ffee1fd4fe4b2cb392cd61e890e98c",
+    "baseline_model": "vernier-baseline-local-v1",
+    "candidate_model": "vernier-candidate-b"
+  },
+  {
+    "case_id": "bb12f754e8d20939",
+    "run_id": "7fdd369ae2924adda01b8becb3a98c96",
+    "baseline_model": "vernier-baseline-local-v1",
+    "candidate_model": "vernier-candidate-a"
+  },
+  {
+    "case_id": "dfb7c9dd50d6e3cd",
+    "run_id": "7fdd369ae2924adda01b8becb3a98c96",
+    "baseline_model": "vernier-baseline-local-v1",
+    "candidate_model": "vernier-candidate-b"
+  },
+  {
+    "case_id": "7dc486e7b71cb1b0",
+    "run_id": "749ada650aa54ef48c2ac4462b445955",
+    "baseline_model": "vernier-baseline-local-v1",
+    "candidate_model": "vernier-candidate-a"
+  },
+  {
+    "case_id": "d1afa444e23bdf70",
+    "run_id": "749ada650aa54ef48c2ac4462b445955",
+    "baseline_model": "vernier-baseline-local-v1",
+    "candidate_model": "vernier-candidate-b"
+  },
+  {
+    "case_id": "090005f85140cb19",
+    "run_id": "0e7ac2f4741e4b88b4f61926e8460bd3",
+    "baseline_model": "vernier-baseline-local-v1",
+    "candidate_model": "vernier-candidate-a"
+  },
+  {
+    "case_id": "57945f06409088c7",
+    "run_id": "0e7ac2f4741e4b88b4f61926e8460bd3",
+    "baseline_model": "vernier-baseline-local-v1",
+    "candidate_model": "vernier-candidate-b"
+  },
+  {
+    "case_id": "f78b66fb5a8dce9c",
+    "run_id": "0eb0088079a145479bbce920aeb66510",
+    "baseline_model": "vernier-baseline-local-v1",
+    "candidate_model": "vernier-candidate-a"
+  },
+  {
+    "case_id": "7e99e8b9f7b552ce",
+    "run_id": "0eb0088079a145479bbce920aeb66510",
+    "baseline_model": "vernier-baseline-local-v1",
+    "candidate_model": "vernier-candidate-b"
+  },
+  {
+    "case_id": "0b6041f145bf9006",
+    "run_id": "70a0ff164be14928a24d82bdc8da9735",
+    "baseline_model": "vernier-baseline-local-v1",
+    "candidate_model": "vernier-candidate-a"
+  },
+  {
+    "case_id": "663edbe7ffe0a948",
+    "run_id": "70a0ff164be14928a24d82bdc8da9735",
+    "baseline_model": "vernier-baseline-local-v1",
+    "candidate_model": "vernier-candidate-b"
+  },
+  {
+    "case_id": "8ec0ec92aec6fa55",
+    "run_id": "bc184e8a367e4d1cbf74b7c8ba47df3a",
+    "baseline_model": "vernier-baseline-local-v1",
+    "candidate_model": "vernier-candidate-a"
+  },
+  {
+    "case_id": "8e0de5f4d0015595",
+    "run_id": "bc184e8a367e4d1cbf74b7c8ba47df3a",
+    "baseline_model": "vernier-baseline-local-v1",
+    "candidate_model": "vernier-candidate-b"
+  },
+  {
+    "case_id": "d8450d749174f6a6",
+    "run_id": "2f5d10398af04f129fe0fa115bb0ba4d",
+    "baseline_model": "vernier-baseline-local-v1",
+    "candidate_model": "vernier-candidate-a"
+  },
+  {
+    "case_id": "98e96343d8a10225",
+    "run_id": "2f5d10398af04f129fe0fa115bb0ba4d",
+    "baseline_model": "vernier-baseline-local-v1",
+    "candidate_model": "vernier-candidate-b"
+  },
+  {
+    "case_id": "859e0b60ffd04148",
+    "run_id": "f4f42dcebf5c491888a857ec141a340b",
+    "baseline_model": "vernier-baseline-local-v1",
+    "candidate_model": "vernier-candidate-a"
+  },
+  {
+    "case_id": "164b25f59e64eec9",
+    "run_id": "f4f42dcebf5c491888a857ec141a340b",
+    "baseline_model": "vernier-baseline-local-v1",
+    "candidate_model": "vernier-candidate-b"
+  },
+  {
+    "case_id": "286a7a72ff0cef56",
+    "run_id": "677ba4685f664d6ea2d6bd6844f58c1b",
+    "baseline_model": "vernier-baseline-local-v1",
+    "candidate_model": "vernier-candidate-a"
+  },
+  {
+    "case_id": "95d696809d622309",
+    "run_id": "677ba4685f664d6ea2d6bd6844f58c1b",
+    "baseline_model": "vernier-baseline-local-v1",
+    "candidate_model": "vernier-candidate-b"
+  },
+  {
+    "case_id": "f1a0512cf12c6922",
+    "run_id": "2bdb5efe0b4040c483346f019a77f0a2",
+    "baseline_model": "vernier-baseline-local-v1",
+    "candidate_model": "vernier-candidate-a"
+  },
+  {
+    "case_id": "7fed44f8eda29afb",
+    "run_id": "2bdb5efe0b4040c483346f019a77f0a2",
+    "baseline_model": "vernier-baseline-local-v1",
+    "candidate_model": "vernier-candidate-b"
+  },
+  {
+    "case_id": "b992b787b60b453b",
+    "run_id": "b313bf54f92949449586f3070680467a",
+    "baseline_model": "vernier-baseline-local-v1",
+    "candidate_model": "vernier-candidate-a"
+  },
+  {
+    "case_id": "4afa57474d06f23d",
+    "run_id": "b313bf54f92949449586f3070680467a",
+    "baseline_model": "vernier-baseline-local-v1",
+    "candidate_model": "vernier-candidate-b"
+  },
+  {
+    "case_id": "3e185f14e8eb8c74",
+    "run_id": "96b6e42fc7d34e7e84cb1eef1ae9192d",
+    "baseline_model": "vernier-baseline-local-v1",
+    "candidate_model": "vernier-candidate-a"
+  },
+  {
+    "case_id": "f57ee2ca66950936",
+    "run_id": "96b6e42fc7d34e7e84cb1eef1ae9192d",
+    "baseline_model": "vernier-baseline-local-v1",
+    "candidate_model": "vernier-candidate-b"
+  },
+  {
+    "case_id": "9461db0ac17ab587",
+    "run_id": "401ea32de819476cb273a8a10891bd23",
+    "baseline_model": "vernier-baseline-local-v1",
+    "candidate_model": "vernier-candidate-a"
+  },
+  {
+    "case_id": "e1a594548ad813ad",
+    "run_id": "401ea32de819476cb273a8a10891bd23",
+    "baseline_model": "vernier-baseline-local-v1",
+    "candidate_model": "vernier-candidate-b"
+  },
+  {
+    "case_id": "57844e5676dab054",
+    "run_id": "ab1bff5911ca4068b100968284355b3a",
+    "baseline_model": "vernier-baseline-local-v1",
+    "candidate_model": "vernier-candidate-a"
+  },
+  {
+    "case_id": "44d2dee8dd74509d",
+    "run_id": "ab1bff5911ca4068b100968284355b3a",
+    "baseline_model": "vernier-baseline-local-v1",
+    "candidate_model": "vernier-candidate-b"
+  },
+  {
+    "case_id": "7e02767868f9fd1b",
+    "run_id": "0d4b0a7732d9480cb254651994caea6b",
+    "baseline_model": "vernier-baseline-local-v1",
+    "candidate_model": "vernier-candidate-a"
+  },
+  {
+    "case_id": "6e3649ef58c2b6c2",
+    "run_id": "0d4b0a7732d9480cb254651994caea6b",
+    "baseline_model": "vernier-baseline-local-v1",
+    "candidate_model": "vernier-candidate-b"
+  },
+  {
+    "case_id": "beea00d60da7b5ec",
+    "run_id": "fefb9987a2394c50a79441be0c3b8b83",
+    "baseline_model": "vernier-baseline-local-v1",
+    "candidate_model": "vernier-candidate-a"
+  },
+  {
+    "case_id": "8ae5df6a94f168c5",
+    "run_id": "fefb9987a2394c50a79441be0c3b8b83",
+    "baseline_model": "vernier-baseline-local-v1",
+    "candidate_model": "vernier-candidate-b"
+  },
+  {
+    "case_id": "68cc17e961ac87db",
+    "run_id": "cf62de21c4704d2fba0d9b08bcd7a2c2",
+    "baseline_model": "vernier-baseline-local-v1",
+    "candidate_model": "vernier-candidate-a"
+  },
+  {
+    "case_id": "4ae4bcff11830a0d",
+    "run_id": "cf62de21c4704d2fba0d9b08bcd7a2c2",
+    "baseline_model": "vernier-baseline-local-v1",
+    "candidate_model": "vernier-candidate-b"
+  },
+  {
+    "case_id": "b8ba393c6797308e",
+    "run_id": "8a7357027ed24b49ba2b0a6cfafc4573",
+    "baseline_model": "vernier-baseline-local-v1",
+    "candidate_model": "vernier-candidate-a"
+  },
+  {
+    "case_id": "f9795ef3f30229a9",
+    "run_id": "8a7357027ed24b49ba2b0a6cfafc4573",
+    "baseline_model": "vernier-baseline-local-v1",
+    "candidate_model": "vernier-candidate-b"
+  },
+  {
+    "case_id": "66497fc86be2c469",
+    "run_id": "2e0f7d4cf7264c43bac12985fd44a179",
+    "baseline_model": "vernier-baseline-local-v1",
+    "candidate_model": "vernier-candidate-a"
+  },
+  {
+    "case_id": "45b5569073b67189",
+    "run_id": "2e0f7d4cf7264c43bac12985fd44a179",
+    "baseline_model": "vernier-baseline-local-v1",
+    "candidate_model": "vernier-candidate-b"
+  },
+  {
+    "case_id": "de2c6ee02f4974db",
+    "run_id": "d8461ff0602444018adda52512703fba",
+    "baseline_model": "vernier-baseline-local-v1",
+    "candidate_model": "vernier-candidate-a"
+  },
+  {
+    "case_id": "aeb27b70215afc8e",
+    "run_id": "d8461ff0602444018adda52512703fba",
+    "baseline_model": "vernier-baseline-local-v1",
+    "candidate_model": "vernier-candidate-b"
+  },
+  {
+    "case_id": "cdbc1c1b2dde7991",
+    "run_id": "9b8aa2ad5b70483896c4f5c9593cf792",
+    "baseline_model": "vernier-baseline-local-v1",
+    "candidate_model": "vernier-candidate-a"
+  },
+  {
+    "case_id": "b3bf2a02dd949a9b",
+    "run_id": "9b8aa2ad5b70483896c4f5c9593cf792",
+    "baseline_model": "vernier-baseline-local-v1",
+    "candidate_model": "vernier-candidate-b"
+  },
+  {
+    "case_id": "e070956d2b93a49c",
+    "run_id": "4b2551fc5c9040d38dcb5a2f7d969553",
+    "baseline_model": "vernier-baseline-local-v1",
+    "candidate_model": "vernier-candidate-a"
+  },
+  {
+    "case_id": "8b00f475d073b8ae",
+    "run_id": "4b2551fc5c9040d38dcb5a2f7d969553",
+    "baseline_model": "vernier-baseline-local-v1",
+    "candidate_model": "vernier-candidate-b"
+  },
+  {
+    "case_id": "8e111910e284df68",
+    "run_id": "b2620195a04b4ce68464586198d13959",
+    "baseline_model": "vernier-baseline-local-v1",
+    "candidate_model": "vernier-candidate-a"
+  },
+  {
+    "case_id": "9f648eabbf74ad70",
+    "run_id": "b2620195a04b4ce68464586198d13959",
+    "baseline_model": "vernier-baseline-local-v1",
+    "candidate_model": "vernier-candidate-b"
+  },
+  {
+    "case_id": "031f59268f482db8",
+    "run_id": "63bb7bd668cd4efe99c0659e76092b1d",
+    "baseline_model": "vernier-baseline-local-v1",
+    "candidate_model": "vernier-candidate-a"
+  },
+  {
+    "case_id": "7db82e8540313515",
+    "run_id": "63bb7bd668cd4efe99c0659e76092b1d",
+    "baseline_model": "vernier-baseline-local-v1",
+    "candidate_model": "vernier-candidate-b"
+  },
+  {
+    "case_id": "42aff98a73cdfd32",
+    "run_id": "bae5bfbcce92455ab2d6d65579a5a4a2",
+    "baseline_model": "vernier-baseline-local-v1",
+    "candidate_model": "vernier-candidate-a"
+  },
+  {
+    "case_id": "98177465bf2b99be",
+    "run_id": "bae5bfbcce92455ab2d6d65579a5a4a2",
+    "baseline_model": "vernier-baseline-local-v1",
+    "candidate_model": "vernier-candidate-b"
+  },
+  {
+    "case_id": "bde4f85b33fe51cc",
+    "run_id": "1dc68714f005461ea24353fa7d5ace84",
+    "baseline_model": "vernier-baseline-local-v1",
+    "candidate_model": "vernier-candidate-a"
+  },
+  {
+    "case_id": "986cd3be9193845a",
+    "run_id": "1dc68714f005461ea24353fa7d5ace84",
+    "baseline_model": "vernier-baseline-local-v1",
+    "candidate_model": "vernier-candidate-b"
+  },
+  {
+    "case_id": "d45c2aa5f2de85e7",
+    "run_id": "b9e6f050be1647048b25229f73bf5f64",
+    "baseline_model": "vernier-baseline-local-v1",
+    "candidate_model": "vernier-candidate-a"
+  },
+  {
+    "case_id": "9f667cb5700ca34d",
+    "run_id": "b9e6f050be1647048b25229f73bf5f64",
+    "baseline_model": "vernier-baseline-local-v1",
+    "candidate_model": "vernier-candidate-b"
+  },
+  {
+    "case_id": "518459fc597215a1",
+    "run_id": "cd7941317c6644b7919c88244bb6b442",
+    "baseline_model": "vernier-baseline-local-v1",
+    "candidate_model": "vernier-candidate-a"
+  },
+  {
+    "case_id": "63be613c049c4fd1",
+    "run_id": "cd7941317c6644b7919c88244bb6b442",
+    "baseline_model": "vernier-baseline-local-v1",
+    "candidate_model": "vernier-candidate-b"
+  }
+]

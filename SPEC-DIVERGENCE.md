@@ -368,6 +368,18 @@ so dashboards can show “text-only drift” without elevating severity.
 - `applied_ignores` sorted by `(mechanism, pointer, side)`  
 - Serialization for golden tests: RFC 8785 JCS UTF-8
 
+### Harness fault (instrument, not a D-rule)
+
+When a live re-drive produces **zero** `ToolCall` events on the candidate
+while the baseline produced one or more, **and** the agent exited
+non-zero or the agent output shows transport/DNS failure markers
+(e.g. dialing `replay.invalid`), the implementation MUST set
+`verdict.harness_fault` to a `ZERO_TOOL_COLLAPSE` detail, clear
+`rule_ids`/`fired`, leave `severity` at `NONE`, and fail the CLI with
+exit code **2**. This MUST NOT be reported as behavioural divergence
+(D05 or otherwise). Intentional tool skips that complete with exit 0 and
+no transport failure remain subject to D05 as usual.
+
 ---
 
 ## 9. Complexity / refusal

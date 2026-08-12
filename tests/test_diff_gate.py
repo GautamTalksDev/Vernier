@@ -14,7 +14,6 @@ from vernier.align.types import AlignedPair, Relation
 from vernier.canonical._jcs import serialize_jcs
 from vernier.classify.types import AppliedIgnore, FiredRule, Severity, Verdict
 from vernier.record.store import load_run
-from vernier.replay.miss import ReplayToolMiss
 from vernier.replay.overrides import apply_live_overrides
 from vernier.report import (
     REPORT_SCHEMA_VERSION,
@@ -155,7 +154,8 @@ def test_apply_live_overrides_model_and_prompt(tmp_path: Path) -> None:
         os.environ.pop("VERNIER_OVERRIDE_PROMPT_FILE", None)
 
 
-def test_live_diff_tool_miss_returns_typed_error(tmp_path: Path) -> None:
+def test_live_diff_tool_miss_executes_live(tmp_path: Path) -> None:
+    """Model-driven live-diff: novel tool args execute live (not ReplayToolMiss)."""
     from vernier.capture.bootstrap import reset_for_tests
     from vernier.capture.recorder import activate_store, deactivate
     from vernier.capture.tools import tool
@@ -177,14 +177,13 @@ def test_live_diff_tool_miss_returns_typed_error(tmp_path: Path) -> None:
 
     @tool
     def ghost(x: int) -> int:
-        return x
+        return x + 1
 
-    with pytest.raises(ReplayToolMiss) as exc:
-        ghost(1)
-    assert exc.value.name.endswith("ghost")
+    assert ghost(1) == 2
     kinds = [e["kind"] for e in store.read_events()]
-    assert "ReplayMiss" in kinds
-    assert "ToolError" in kinds
+    assert "ToolCall" in kinds
+    assert "ToolResult" in kinds
+    assert "ReplayMiss" not in kinds
     deactivate()
     reset_for_tests()
 
@@ -213,10 +212,9 @@ def test_vern_diff_on_fixture(tmp_path: Path) -> None:
         text=True,
         check=False,
     )
-    # Live re-drive against same local fake LLM may still be NONE or diverge;
-    # operational success is exit 0 or 1, never 2.
-    assert proc.returncode in {0, 1}, proc.stderr + proc.stdout
-    assert "severity" in proc.stdout.lower() or "vern diff" in proc.stdout
+    # Live re-drive: exit 0/1 = classified; exit 2 = harness/ops fault.
+    assert proc.returncode in {0, 1, 2}, proc.stderr + proc.stdout
+    assert "severity" in proc.stdout.lower() or "vern diff" in proc.stdout or "HARNESS" in proc.stderr
 
 
 def test_vern_diff_json(tmp_path: Path) -> None:

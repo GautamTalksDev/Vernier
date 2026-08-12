@@ -75,7 +75,22 @@ class Verdict:
     rule_ids: tuple[str, ...]
     fired: tuple[FiredRule, ...]
     applied_ignores: tuple[AppliedIgnore, ...]
+    # Instrument failure — never a D-rule behavioural finding.
+    # When set, severity is NONE and rule_ids/fired are empty.
+    harness_fault: str | None = None
 
+
+HARNESS_FAULT_ZERO_TOOL_COLLAPSE = (
+    "ZERO_TOOL_COLLAPSE: candidate produced zero ToolCall events while "
+    "baseline produced one or more. This is a harness/setup fault, not a "
+    "divergence-v1 behavioural finding."
+)
+
+HARNESS_FAULT_REQUEST_BODY_MISMATCH = (
+    "REQUEST_BODY_MISMATCH: candidate LLM request body differs from baseline "
+    "in a control field outside allowed overrides (model/seed). This is a "
+    "harness defect, not a divergence-v1 behavioural finding."
+)
 
 @dataclass
 class IgnoreConfig:

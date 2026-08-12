@@ -1,0 +1,1 @@
+{"command":["/home/gautamtalksdev/projects/Vernier/.venv/bin/python3","/home/gautamtalksdev/projects/Vernier/examples/research_agent.py","--input","climate","--model","qwen3:4b-instruct"],"cwd":"/home/gautamtalksdev/projects/Vernier","mode":"live_diff","replay_of":"69f9854693f84c498271b9273249efa2","run_id":"5a40e7f9117147c7821e0873e22c0dd5"}

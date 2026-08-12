@@ -1,0 +1,1 @@
+{"id":"chatcmpl-629","object":"chat.completion","created":1786541862,"model":"qwen3:4b-instruct","system_fingerprint":"fp_ollama","choices":[{"index":0,"message":{"role":"assistant","content":"The booking for passenger \"dan\" on flight DEN-BOS-B has been successfully confirmed."},"finish_reason":"stop"}],"usage":{"prompt_tokens":663,"completion_tokens":19,"total_tokens":682}}

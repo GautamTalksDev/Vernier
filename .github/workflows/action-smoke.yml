@@ -1,0 +1,44 @@
+name: Action smoke
+
+# Exercises the composite action against fixture corpus (no provider secrets).
+on:
+  pull_request:
+    paths:
+      - "action.yml"
+      - "action/**"
+      - "src/vernier/cli/**"
+      - "src/vernier/report/gate_report.py"
+      - "testdata/action_demo/**"
+      - ".github/workflows/action-smoke.yml"
+  push:
+    branches: [main]
+    paths:
+      - "action.yml"
+      - "action/**"
+      - "src/vernier/cli/**"
+      - "src/vernier/report/gate_report.py"
+      - "testdata/action_demo/**"
+      - ".github/workflows/action-smoke.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  statuses: write
+
+jobs:
+  gate-green:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Vernier gate (fixture corpus)
+        id: vern
+        uses: ./
+        with:
+          corpus-path: testdata/action_demo/vernier-corpus
+          max-severity: MEDIUM
+          baseline-model: fixture-baseline
+          fail-on-miss: "false"
+      - name: Assert green
+        run: |
+          test "${{ steps.vern.outputs.worst-severity }}" = "NONE"
+          test "${{ steps.vern.outputs.n-runs }}" = "2"

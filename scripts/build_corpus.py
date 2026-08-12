@@ -1,8 +1,12 @@
 #!/usr/bin/env python3
 """Build the KT-1 evaluation corpus (≥30 runs across 6 agent shapes).
 
-Records against the designated baseline model ``vernier-baseline-local-v1``
-(local deterministic stub — no paid API required for corpus construction).
+Default baseline: ``vernier-baseline-local-v1`` (local stub with deterministic
+tool_calls). For an Ollama-backed corpus (needed for burn-in self-pair)::
+
+    VERNIER_LLM_BASE_URL=http://localhost:11434 \\
+    VERNIER_CORPUS_MODEL=qwen3:4b-instruct \\
+    uv run python scripts/build_corpus.py
 
 Raw run payloads live under ``testdata/corpus/runs/`` and are gitignored;
 ``testdata/corpus/MANIFEST.json`` is committed. Rebuild anytime with::
@@ -22,12 +26,13 @@ from pathlib import Path
 
 from vernier.canonical._jcs import serialize_jcs
 from vernier.record.store import load_run
+from vernier.replay.harness_guard import tool_call_count
 from vernier.replay.project import project_run
 
 ROOT = Path(__file__).resolve().parents[1]
 OUT = ROOT / "testdata" / "corpus"
 RUNS = OUT / "runs"
-BASELINE_MODEL = "vernier-baseline-local-v1"
+BASELINE_MODEL = os.environ.get("VERNIER_CORPUS_MODEL", "vernier-baseline-local-v1")
 
 AGENTS: dict[str, dict[str, object]] = {
     "research": {
@@ -75,10 +80,17 @@ AGENTS: dict[str, dict[str, object]] = {
 }
 
 
-def _record(script: str, input_value: str, tmp_runs: Path) -> Path:
+def _record(script: str, input_value: str, tmp_runs: Path, *, model: str) -> Path:
     if tmp_runs.exists():
         shutil.rmtree(tmp_runs)
     tmp_runs.mkdir(parents=True)
+    env = os.environ.copy()
+    env.pop("VERNIER_CONTROL_DROP_TOOL", None)
+    env.setdefault("OPENAI_API_KEY", "ollama")
+    env.setdefault("VERNIER_LLM_API_KEY", "ollama")
+    env.setdefault("VERNIER_LLM_TEMPERATURE", "0")
+    env.setdefault("VERNIER_LLM_SEED", "42")
+    env.setdefault("VERNIER_LLM_STREAM", "false")
     cmd = [
         "uv",
         "run",
@@ -92,7 +104,7 @@ def _record(script: str, input_value: str, tmp_runs: Path) -> Path:
         "--input",
         input_value,
         "--model",
-        BASELINE_MODEL,
+        model,
     ]
     proc = subprocess.run(
         cmd,
@@ -100,6 +112,7 @@ def _record(script: str, input_value: str, tmp_runs: Path) -> Path:
         capture_output=True,
         text=True,
         check=False,
+        env=env,
     )
     dirs = [p for p in tmp_runs.iterdir() if p.is_dir()]
     if not dirs:
@@ -119,6 +132,8 @@ def main() -> int:
 
     entries: list[dict[str, object]] = []
     tmp = OUT / "_tmp_record"
+    model = BASELINE_MODEL
+    print(f"building corpus with baseline_model={model!r}", flush=True)
 
     for shape, cfg in AGENTS.items():
         script = str(cfg["script"])
@@ -126,32 +141,50 @@ def main() -> int:
         for index, input_value in enumerate(inputs, start=1):
             label = f"{shape}_{index:02d}"
             print(f"recording {label} input={input_value!r} ...", flush=True)
-            src = _record(script, input_value, tmp)
-            frozen = load_run(src)
-            dest = RUNS / frozen.run_id
-            if dest.exists():
-                shutil.rmtree(dest)
-            shutil.copytree(src, dest)
+            ok_dest: Path | None = None
+            ok_traj = None
+            ok_tools = 0
+            last_err = ""
+            for attempt in range(1, 4):
+                src = _record(script, input_value, tmp, model=model)
+                frozen_try = load_run(src)
+                dest = RUNS / frozen_try.run_id
+                if dest.exists():
+                    shutil.rmtree(dest)
+                shutil.copytree(src, dest)
 
-            portable = [
-                "python",
-                script,
-                "--input",
-                input_value,
-                "--model",
-                BASELINE_MODEL,
-            ]
-            manifest_path = dest / "manifest.json"
-            manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
-            manifest["command"] = portable
-            manifest["cwd"] = str(ROOT)
-            manifest_path.write_bytes(serialize_jcs(manifest) + b"\n")
+                portable = [
+                    "python",
+                    script,
+                    "--input",
+                    input_value,
+                    "--model",
+                    model,
+                ]
+                manifest_path = dest / "manifest.json"
+                manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+                manifest["command"] = portable
+                manifest["cwd"] = str(ROOT)
+                manifest_path.write_bytes(serialize_jcs(manifest) + b"\n")
 
-            traj = project_run(dest)
-            if len(traj) < 8:
-                raise RuntimeError(
-                    f"{label} projected only {len(traj)} steps; need >=8"
+                traj = project_run(dest)
+                tools = tool_call_count(traj)
+                ok_dest, ok_traj, ok_tools = dest, traj, tools
+                if len(traj) >= 8 and tools >= 4:
+                    break
+                last_err = f"steps={len(traj)} tools={tools}"
+                print(
+                    f"  retry {attempt}/3 for {label} ({last_err})",
+                    flush=True,
                 )
+            else:
+                raise RuntimeError(
+                    f"{label} failed >=8 steps and >=4 tools after retries "
+                    f"({last_err})"
+                )
+
+            assert ok_dest is not None and ok_traj is not None
+            frozen = load_run(ok_dest)
 
             entries.append(
                 {
@@ -160,15 +193,17 @@ def main() -> int:
                     "label": label,
                     "script": script,
                     "input": input_value,
-                    "baseline_model": BASELINE_MODEL,
+                    "baseline_model": model,
                     "event_count": frozen.manifest.event_count,
-                    "projected_steps": len(traj),
+                    "projected_steps": len(ok_traj),
+                    "tool_calls": ok_tools,
                     "path": f"runs/{frozen.run_id}",
                 }
             )
             print(
                 f"  OK {label} run_id={frozen.run_id} "
-                f"steps={len(traj)} events={frozen.manifest.event_count}",
+                f"steps={len(ok_traj)} tools={ok_tools} "
+                f"events={frozen.manifest.event_count}",
                 flush=True,
             )
 
@@ -177,7 +212,7 @@ def main() -> int:
 
     corpus_manifest = {
         "version": "corpus-v1",
-        "baseline_model": BASELINE_MODEL,
+        "baseline_model": model,
         "run_count": len(entries),
         "shapes": sorted(AGENTS),
         "storage": {
@@ -192,6 +227,15 @@ def main() -> int:
     }
     (OUT / "MANIFEST.json").write_text(
         json.dumps(corpus_manifest, indent=2) + "\n",
+        encoding="utf-8",
+    )
+    (OUT / "README.md").write_text(
+        "# Vernier KT-1 corpus (model-driven agents)\n\n"
+        "Prior scripted corpus: `../corpus-v0-invalid/` "
+        "(see `docs/CORPUS-AUDIT.md`).\n\n"
+        f"Baseline model: `{model}`\n"
+        "Rebuild: `uv run python scripts/build_corpus.py`\n"
+        "Verify (KT-3): `uv run python scripts/verify_corpus.py`\n",
         encoding="utf-8",
     )
     print(f"wrote {OUT / 'MANIFEST.json'} with {len(entries)} runs", flush=True)

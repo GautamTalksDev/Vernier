@@ -1,0 +1,1 @@
+{"command":["/home/gautamtalksdev/projects/Vernier/.venv/bin/python3","/home/gautamtalksdev/projects/Vernier/examples/router_agent.py","--input","math 42","--model","qwen3:4b-instruct"],"cwd":"/home/gautamtalksdev/projects/Vernier","mode":"live_diff","replay_of":"8c30beb612664ded894f7865bcadb68a","run_id":"3db0d98c2aeb4b5c996e7ed9492004c2"}

@@ -12,6 +12,7 @@ from typing import Annotated
 import typer
 
 from vernier.classify.types import Severity, severity_rank
+from vernier.init_cmd import run_init
 from vernier.record.index import (
     DEFAULT_INDEX_PATH,
     list_runs,
@@ -25,7 +26,14 @@ from vernier.replay.redrive import (
     resolve_command,
     write_shim,
 )
-from vernier.report import build_report, render_human, report_to_jcs
+from vernier.report import (
+    build_gate_report,
+    build_report,
+    gate_report_to_jcs,
+    render_gate_comment,
+    render_human,
+    report_to_jcs,
+)
 
 NETWORK_GUARANTEE = (
     "Network guarantee: vern makes ZERO network requests other than to the "
@@ -340,6 +348,13 @@ def diff(
             nl=False,
         )
 
+    if result.verdict.harness_fault:
+        typer.echo(
+            f"vern diff: HARNESS_FAULT: {result.verdict.harness_fault}",
+            err=True,
+        )
+        raise typer.Exit(code=2)
+
     if (
         result.verdict.severity is Severity.NONE
         and not result.verdict.rule_ids
@@ -347,6 +362,10 @@ def diff(
     ):
         raise typer.Exit(code=0)
     raise typer.Exit(code=1)
+
+
+def _has_replay_miss(agent_output: str) -> bool:
+    return "ReplayMiss" in agent_output and "ReplayToolMiss" not in agent_output
 
 
 @app.command()
@@ -373,9 +392,37 @@ def gate(
         str | None,
         typer.Option("--model", help="Override model for live re-drives."),
     ] = None,
+    baseline_model: Annotated[
+        str | None,
+        typer.Option(
+            "--baseline-model",
+            help="Label for the recorded baseline model (report metadata only).",
+        ),
+    ] = None,
     prompt_file: Annotated[
         Path | None,
         typer.Option("--prompt-file", help="Override system prompt file."),
+    ] = None,
+    fail_on_miss: Annotated[
+        bool,
+        typer.Option(
+            "--fail-on-miss/--no-fail-on-miss",
+            help="Exit 2 when a hard ReplayMiss occurs during re-drive.",
+        ),
+    ] = True,
+    json_out: Annotated[
+        Path | None,
+        typer.Option(
+            "--json-out",
+            help="Write vernier-gate-report-v1 JSON (JCS) to this path.",
+        ),
+    ] = None,
+    comment_out: Annotated[
+        Path | None,
+        typer.Option(
+            "--comment-out",
+            help="Write PR-comment markdown summary to this path.",
+        ),
     ] = None,
     runs_dir: Annotated[
         Path,
@@ -439,6 +486,8 @@ def gate(
     worst: Severity = Severity.NONE
     worst_label = ""
     failures = 0
+    miss_failures = 0
+    run_rows: list[dict[str, object]] = []
 
     for label, source_dir in targets:
         integrity = verify_run(source_dir)
@@ -458,23 +507,113 @@ def gate(
             raise typer.Exit(code=2) from exc
 
         sev = result.verdict.severity
+        miss = _has_replay_miss(result.agent_output)
+        harness = bool(result.verdict.harness_fault)
+        above = severity_rank(sev) > severity_rank(threshold)
         typer.echo(
             f"{label}: severity={sev.value} rules={list(result.verdict.rule_ids)}"
+            + (" miss=1" if miss else "")
+            + (" HARNESS_FAULT" if harness else "")
+        )
+        if harness:
+            typer.echo(f"  {result.verdict.harness_fault}", err=True)
+        run_rows.append(
+            {
+                "label": label,
+                "run_id": result.source_run_id,
+                "candidate_run_id": result.candidate_run_id,
+                "severity": sev.value,
+                "rule_ids": list(result.verdict.rule_ids),
+                "above_threshold": above,
+                "miss": miss,
+                "harness_fault": result.verdict.harness_fault,
+            }
         )
         if severity_rank(sev) > severity_rank(worst):
             worst = sev
             worst_label = label
-        if severity_rank(sev) > severity_rank(threshold):
+        if above:
             failures += 1
+        if (miss and fail_on_miss) or harness:
+            miss_failures += 1
+
+    report = build_gate_report(
+        runs=run_rows,
+        max_severity=threshold.value,
+        model=model,
+        baseline_model=baseline_model,
+        fail_on_miss=fail_on_miss,
+    )
+    if json_out is not None:
+        json_out.parent.mkdir(parents=True, exist_ok=True)
+        json_out.write_bytes(gate_report_to_jcs(report))
+        typer.echo(f"vern gate: wrote {json_out}", err=True)
+    if comment_out is not None:
+        comment_out.parent.mkdir(parents=True, exist_ok=True)
+        comment_out.write_text(render_gate_comment(report), encoding="utf-8")
+        typer.echo(f"vern gate: wrote {comment_out}", err=True)
 
     typer.echo(
         f"vern gate: worst={worst.value}"
         + (f" ({worst_label})" if worst_label else "")
         + f" threshold={threshold.value}"
+        + f" n={len(run_rows)}"
     )
+    if miss_failures:
+        typer.echo(
+            "vern gate: ReplayMiss or HARNESS_FAULT (fail closed)",
+            err=True,
+        )
+        raise typer.Exit(code=2)
     if failures:
         raise typer.Exit(code=1)
     raise typer.Exit(code=0)
+
+
+@app.command("init")
+def init_cmd(
+    path: Annotated[
+        Path,
+        typer.Argument(help="Repository root to scaffold into."),
+    ] = Path("."),
+    force: Annotated[
+        bool,
+        typer.Option("--force", help="Overwrite existing vernier.toml / workflow."),
+    ] = False,
+    action_ref: Annotated[
+        str,
+        typer.Option(
+            "--action-ref",
+            help="GitHub Action uses: value (owner/repo@ref).",
+        ),
+    ] = "gautamtalksdev/Vernier@main",
+    corpus_path: Annotated[
+        str,
+        typer.Option("--corpus-path", help="Default corpus path for the workflow."),
+    ] = "vernier-corpus",
+    max_severity: Annotated[
+        str,
+        typer.Option("--max-severity", help="Default max severity for the workflow."),
+    ] = "MEDIUM",
+) -> None:
+    """Scaffold vernier.toml and a .github/workflows vernier-gate example."""
+    try:
+        written = run_init(
+            path,
+            force=force,
+            action_ref=action_ref,
+            corpus_path=corpus_path,
+            max_severity=max_severity,
+        )
+    except FileExistsError as exc:
+        typer.echo(f"vern init: {exc}", err=True)
+        raise typer.Exit(code=2) from exc
+    for item in written:
+        typer.echo(f"wrote {item}")
+    typer.echo(
+        "Next: record baseline runs into "
+        f"{corpus_path}/ then push. See docs/CI.md."
+    )
 
 
 @app.command("ls")

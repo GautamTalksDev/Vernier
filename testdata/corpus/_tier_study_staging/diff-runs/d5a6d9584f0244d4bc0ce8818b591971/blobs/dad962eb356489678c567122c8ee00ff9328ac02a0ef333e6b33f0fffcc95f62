@@ -1,0 +1,1 @@
+{"command":["/home/gautamtalksdev/projects/Vernier/.venv/bin/python3","/home/gautamtalksdev/projects/Vernier/examples/coding_agent.py","--input","payments","--model","qwen3:4b-instruct"],"cwd":"/home/gautamtalksdev/projects/Vernier","mode":"live_diff","replay_of":"55f3d33afc3142c594d2730e0452a59e","run_id":"d5a6d9584f0244d4bc0ce8818b591971"}

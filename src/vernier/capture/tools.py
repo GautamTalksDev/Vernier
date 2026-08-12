@@ -21,7 +21,6 @@ from vernier.replay.session import (
     get_catalog,
     is_live_diff,
     record_replay_miss,
-    tool_miss_as_error,
 )
 
 F = TypeVar("F", bound=Callable[..., Any])
@@ -69,55 +68,56 @@ def tool(func: F) -> F:
             if stub is None:
                 detail = f"no stub for tool {name!r} args_digest={args_digest}"
                 if is_live_diff():
-                    raise tool_miss_as_error(
-                        name=name,
+                    # Model chose tool/args absent from the baseline record.
+                    # Execute live so the divergence is classifiable (D04/D05/D06)
+                    # rather than collapsing into a ReplayToolMiss harness fault.
+                    pass
+                else:
+                    raise record_replay_miss(
+                        channel="tool",
                         detail=detail,
                         logical_parent_seq=seq if seq >= 0 else None,
                     )
-                raise record_replay_miss(
-                    channel="tool",
-                    detail=detail,
-                    logical_parent_seq=seq if seq >= 0 else None,
-                )
-            if not stub.ok:
+            else:
+                if not stub.ok:
+                    if store is not None:
+                        with contextlib.suppress(Exception):
+                            safe_append(
+                                store,
+                                seq=store.next_seq(),
+                                kind=EventKind.TOOL_ERROR,
+                                payload={
+                                    "channel": "function",
+                                    "name": name,
+                                    "error_type": stub.error_type or "Exception",
+                                    "error": stub.error or "",
+                                },
+                                logical_parent_seq=seq,
+                            )
+                    raise RuntimeError(stub.error or stub.error_type or "tool error")
                 if store is not None:
-                    with contextlib.suppress(Exception):
+                    try:
+                        result_obj = _jsonable(stub.result)
                         safe_append(
                             store,
                             seq=store.next_seq(),
-                            kind=EventKind.TOOL_ERROR,
+                            kind=EventKind.TOOL_RESULT,
                             payload={
                                 "channel": "function",
                                 "name": name,
-                                "error_type": stub.error_type or "Exception",
-                                "error": stub.error or "",
+                                "result_digest": digest(result_obj),
                             },
                             logical_parent_seq=seq,
+                            blob_data=serialize_jcs(result_obj),
                         )
-                raise RuntimeError(stub.error or stub.error_type or "tool error")
-            if store is not None:
-                try:
-                    result_obj = _jsonable(stub.result)
-                    safe_append(
-                        store,
-                        seq=store.next_seq(),
-                        kind=EventKind.TOOL_RESULT,
-                        payload={
-                            "channel": "function",
-                            "name": name,
-                            "result_digest": digest(result_obj),
-                        },
-                        logical_parent_seq=seq,
-                        blob_data=serialize_jcs(result_obj),
-                    )
-                except Exception as exc:  # noqa: BLE001
-                    emit_capture_gap(
-                        store,
-                        reason="tool_result_record_failed",
-                        detail={"error_type": type(exc).__name__, "seq": seq},
-                        logical_parent_seq=seq,
-                    )
-            return stub.result
+                    except Exception as exc:  # noqa: BLE001
+                        emit_capture_gap(
+                            store,
+                            reason="tool_result_record_failed",
+                            detail={"error_type": type(exc).__name__, "seq": seq},
+                            logical_parent_seq=seq,
+                        )
+                return stub.result
 
         assert store is not None
         try:

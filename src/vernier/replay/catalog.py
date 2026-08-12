@@ -52,6 +52,14 @@ class ReplayCatalog:
     env_keys: frozenset[str] = field(default_factory=frozenset)
     had_wall_clock: bool = False
     had_random: bool = False
+    # Ordered baseline chat-completions bodies (live-diff parity checks).
+    llm_request_bodies: deque[bytes] = field(default_factory=deque)  # noqa: RUF012
+    llm_request_turn: int = 0
+
+    def take_llm_request_body(self) -> bytes | None:
+        if not self.llm_request_bodies:
+            return None
+        return self.llm_request_bodies.popleft()
 
     def take_http(self, key: str) -> HttpStub | None:
         queue = self.http_by_key.get(key)
@@ -126,6 +134,7 @@ def catalog_from_run(frozen: FrozenRun) -> ReplayCatalog:
     wall_clock_ns: deque[int] = deque()
     random_floats: deque[float] = deque()
     env_reads: dict[str, deque[str | None]] = defaultdict(deque)
+    llm_request_bodies: deque[bytes] = deque()
 
     # Index envelopes by seq for parent lookups.
     envelopes = list(reader.read_events())
@@ -152,7 +161,12 @@ def catalog_from_run(frozen: FrozenRun) -> ReplayCatalog:
         seq = int(env["seq"])
         payload = payload_by_seq[seq]
 
-        if kind == EventKind.LLM_RESPONSE.value:
+        if kind == EventKind.LLM_REQUEST.value:
+            body_ref = payload.get("body_blob_ref")
+            if body_ref:
+                llm_request_bodies.append(reader.read_blob(body_ref))
+
+        elif kind == EventKind.LLM_RESPONSE.value:
             parent = env.get("logical_parent_seq")
             if parent is None:
                 continue
@@ -255,4 +269,5 @@ def catalog_from_run(frozen: FrozenRun) -> ReplayCatalog:
         env_keys=frozenset(env_reads),
         had_wall_clock=bool(wall_clock or wall_clock_ns),
         had_random=bool(random_floats),
+        llm_request_bodies=llm_request_bodies,
     )

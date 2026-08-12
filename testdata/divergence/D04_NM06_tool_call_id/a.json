@@ -1,0 +1,1 @@
+[{"kind":"LlmTurn"},{"arguments":{"id":"g3oLLsfxVTuFc4YFX9bM7rcKxiPwkOgw","q":"x","tool_call_id":"g3oLLsfxVTuFc4YFX9bM7rcKxiPwkOgw","tool_calls":[{"id":"g3oLLsfxVTuFc4YFX9bM7rcKxiPwkOgw"}]},"destructive":false,"kind":"ToolCall","retry_index":0,"tool_name":"search"},{"is_error":false,"kind":"ToolResult"},{"final_message":"done","kind":"Terminal","terminal_kind":"FinalMessage"}]

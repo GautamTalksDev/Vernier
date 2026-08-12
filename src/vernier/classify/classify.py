@@ -267,11 +267,12 @@ def classify_pair(
         rule_ids=tuple(r.id for r in unique),
         fired=unique,
         applied_ignores=applied,
+        harness_fault=None,
     )
 
 
 def verdict_to_dict(verdict: Verdict) -> dict[str, Any]:
-    return {
+    out: dict[str, Any] = {
         "spec_version": verdict.spec_version,
         "severity": verdict.severity.value,
         "rule_ids": list(verdict.rule_ids),
@@ -291,7 +292,9 @@ def verdict_to_dict(verdict: Verdict) -> dict[str, Any]:
             }
             for i in verdict.applied_ignores
         ],
+        "harness_fault": verdict.harness_fault,
     }
+    return out
 
 
 def _tool_set(run: list[TrajectoryEvent]) -> set[str]:

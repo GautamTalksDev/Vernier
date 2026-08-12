@@ -15,6 +15,7 @@ from vernier.align.types import AlignedPair
 from vernier.classify import classify_pair
 from vernier.classify.types import TrajectoryEvent, Verdict
 from vernier.record.store import RecordStore, load_run
+from vernier.replay.harness_guard import apply_harness_guard
 from vernier.replay.project import project_align_events, project_run
 
 
@@ -69,6 +70,26 @@ def index_beside(runs_dir: Path) -> Path:
     return runs_dir / "index.sqlite"
 
 
+def _llm_base_from_run(source_dir: Path) -> str | None:
+    """Origin used during capture so full-stub URL keys match the record."""
+    from urllib.parse import urlsplit
+
+    frozen = load_run(source_dir)
+    reader = RecordStore(source_dir, frozen.run_id)
+    for env_row in reader.read_events():
+        if env_row["kind"] != "LlmRequest":
+            continue
+        payload = reader.read_payload(env_row)
+        url = str(payload.get("url") or "")
+        for suffix in ("/v1/chat/completions", "/chat/completions"):
+            if url.endswith(suffix):
+                return url[: -len(suffix)]
+        parts = urlsplit(url)
+        if parts.scheme and parts.netloc:
+            return f"{parts.scheme}://{parts.netloc}"
+    return None
+
+
 def redrive(
     source_dir: Path,
     *,
@@ -107,6 +128,7 @@ def redrive(
     if mode == "live_diff":
         env["VERNIER_DIFF"] = "1"
         env.pop("VERNIER_REPLAY", None)
+        env.pop("VERNIER_REPLAY_LLM_BASE", None)
         if model:
             env["VERNIER_OVERRIDE_MODEL"] = model
         if prompt_file is not None:
@@ -116,6 +138,13 @@ def redrive(
         env.pop("VERNIER_DIFF", None)
         env.pop("VERNIER_OVERRIDE_MODEL", None)
         env.pop("VERNIER_OVERRIDE_PROMPT_FILE", None)
+        # Point the agent at the same origin recorded during capture so HTTP
+        # stub keys (method+url+body) match. Transport never dials in replay.
+        replay_base = _llm_base_from_run(source_dir)
+        if replay_base:
+            env["VERNIER_REPLAY_LLM_BASE"] = replay_base
+        else:
+            env.pop("VERNIER_REPLAY_LLM_BASE", None)
     else:
         raise ValueError(f"unknown redrive mode: {mode!r}")
 
@@ -137,9 +166,9 @@ def redrive(
     pairs = tuple(
         align(project_align_events(source_dir), project_align_events(candidate_dir))
     )
-    verdict = classify_pair(traj_a, traj_b)
+    classified = classify_pair(traj_a, traj_b)
     frozen_src = load_run(source_dir)
-    return RedriveResult(
+    provisional = RedriveResult(
         source_run_id=frozen_src.run_id,
         candidate_run_id=candidate_id,
         source_dir=source_dir,
@@ -147,9 +176,24 @@ def redrive(
         traj_a=traj_a,
         traj_b=traj_b,
         pairs=pairs,
-        verdict=verdict,
+        verdict=classified,
         agent_exit=completed.returncode,
         agent_output=output,
+    )
+    guarded = apply_harness_guard(provisional)
+    if guarded is classified:
+        return provisional
+    return RedriveResult(
+        source_run_id=provisional.source_run_id,
+        candidate_run_id=provisional.candidate_run_id,
+        source_dir=provisional.source_dir,
+        candidate_dir=provisional.candidate_dir,
+        traj_a=provisional.traj_a,
+        traj_b=provisional.traj_b,
+        pairs=provisional.pairs,
+        verdict=guarded,
+        agent_exit=provisional.agent_exit,
+        agent_output=provisional.agent_output,
     )
 
 

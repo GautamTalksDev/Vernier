@@ -1,0 +1,350 @@
+{
+  "version": "corpus-v1",
+  "baseline_model": "vernier-baseline-local-v1",
+  "run_count": 30,
+  "shapes": [
+    "booking",
+    "coding",
+    "data",
+    "research",
+    "router",
+    "support"
+  ],
+  "storage": {
+    "runs_dir": "runs/",
+    "git": "raw records gitignored; rebuild via scripts/build_corpus.py",
+    "external_bucket": "(optional) set VERNIER_CORPUS_BUCKET to sync elsewhere"
+  },
+  "runs": [
+    {
+      "run_id": "f2bedf5d5a5b429f98783798ea90c09e",
+      "shape": "research",
+      "label": "research_01",
+      "script": "examples/research_agent.py",
+      "input": "climate",
+      "baseline_model": "vernier-baseline-local-v1",
+      "event_count": 22,
+      "projected_steps": 17,
+      "path": "runs/f2bedf5d5a5b429f98783798ea90c09e"
+    },
+    {
+      "run_id": "b6ffee1fd4fe4b2cb392cd61e890e98c",
+      "shape": "research",
+      "label": "research_02",
+      "script": "examples/research_agent.py",
+      "input": "antibiotics",
+      "baseline_model": "vernier-baseline-local-v1",
+      "event_count": 22,
+      "projected_steps": 17,
+      "path": "runs/b6ffee1fd4fe4b2cb392cd61e890e98c"
+    },
+    {
+      "run_id": "7fdd369ae2924adda01b8becb3a98c96",
+      "shape": "research",
+      "label": "research_03",
+      "script": "examples/research_agent.py",
+      "input": "llms",
+      "baseline_model": "vernier-baseline-local-v1",
+      "event_count": 22,
+      "projected_steps": 17,
+      "path": "runs/7fdd369ae2924adda01b8becb3a98c96"
+    },
+    {
+      "run_id": "749ada650aa54ef48c2ac4462b445955",
+      "shape": "research",
+      "label": "research_04",
+      "script": "examples/research_agent.py",
+      "input": "urban-heat",
+      "baseline_model": "vernier-baseline-local-v1",
+      "event_count": 22,
+      "projected_steps": 17,
+      "path": "runs/749ada650aa54ef48c2ac4462b445955"
+    },
+    {
+      "run_id": "0e7ac2f4741e4b88b4f61926e8460bd3",
+      "shape": "research",
+      "label": "research_05",
+      "script": "examples/research_agent.py",
+      "input": "oceans",
+      "baseline_model": "vernier-baseline-local-v1",
+      "event_count": 22,
+      "projected_steps": 17,
+      "path": "runs/0e7ac2f4741e4b88b4f61926e8460bd3"
+    },
+    {
+      "run_id": "0eb0088079a145479bbce920aeb66510",
+      "shape": "data",
+      "label": "data_01",
+      "script": "examples/data_agent.py",
+      "input": "sales",
+      "baseline_model": "vernier-baseline-local-v1",
+      "event_count": 22,
+      "projected_steps": 17,
+      "path": "runs/0eb0088079a145479bbce920aeb66510"
+    },
+    {
+      "run_id": "70a0ff164be14928a24d82bdc8da9735",
+      "shape": "data",
+      "label": "data_02",
+      "script": "examples/data_agent.py",
+      "input": "inventory",
+      "baseline_model": "vernier-baseline-local-v1",
+      "event_count": 22,
+      "projected_steps": 17,
+      "path": "runs/70a0ff164be14928a24d82bdc8da9735"
+    },
+    {
+      "run_id": "bc184e8a367e4d1cbf74b7c8ba47df3a",
+      "shape": "data",
+      "label": "data_03",
+      "script": "examples/data_agent.py",
+      "input": "users",
+      "baseline_model": "vernier-baseline-local-v1",
+      "event_count": 22,
+      "projected_steps": 17,
+      "path": "runs/bc184e8a367e4d1cbf74b7c8ba47df3a"
+    },
+    {
+      "run_id": "2f5d10398af04f129fe0fa115bb0ba4d",
+      "shape": "data",
+      "label": "data_04",
+      "script": "examples/data_agent.py",
+      "input": "events",
+      "baseline_model": "vernier-baseline-local-v1",
+      "event_count": 22,
+      "projected_steps": 17,
+      "path": "runs/2f5d10398af04f129fe0fa115bb0ba4d"
+    },
+    {
+      "run_id": "f4f42dcebf5c491888a857ec141a340b",
+      "shape": "data",
+      "label": "data_05",
+      "script": "examples/data_agent.py",
+      "input": "metrics",
+      "baseline_model": "vernier-baseline-local-v1",
+      "event_count": 22,
+      "projected_steps": 17,
+      "path": "runs/f4f42dcebf5c491888a857ec141a340b"
+    },
+    {
+      "run_id": "677ba4685f664d6ea2d6bd6844f58c1b",
+      "shape": "support",
+      "label": "support_01",
+      "script": "examples/support_agent.py",
+      "input": "cust1:t9",
+      "baseline_model": "vernier-baseline-local-v1",
+      "event_count": 22,
+      "projected_steps": 17,
+      "path": "runs/677ba4685f664d6ea2d6bd6844f58c1b"
+    },
+    {
+      "run_id": "2bdb5efe0b4040c483346f019a77f0a2",
+      "shape": "support",
+      "label": "support_02",
+      "script": "examples/support_agent.py",
+      "input": "cust2:t3",
+      "baseline_model": "vernier-baseline-local-v1",
+      "event_count": 22,
+      "projected_steps": 17,
+      "path": "runs/2bdb5efe0b4040c483346f019a77f0a2"
+    },
+    {
+      "run_id": "b313bf54f92949449586f3070680467a",
+      "shape": "support",
+      "label": "support_03",
+      "script": "examples/support_agent.py",
+      "input": "cust1:t1",
+      "baseline_model": "vernier-baseline-local-v1",
+      "event_count": 22,
+      "projected_steps": 17,
+      "path": "runs/b313bf54f92949449586f3070680467a"
+    },
+    {
+      "run_id": "96b6e42fc7d34e7e84cb1eef1ae9192d",
+      "shape": "support",
+      "label": "support_04",
+      "script": "examples/support_agent.py",
+      "input": "cust9:t2",
+      "baseline_model": "vernier-baseline-local-v1",
+      "event_count": 22,
+      "projected_steps": 17,
+      "path": "runs/96b6e42fc7d34e7e84cb1eef1ae9192d"
+    },
+    {
+      "run_id": "401ea32de819476cb273a8a10891bd23",
+      "shape": "support",
+      "label": "support_05",
+      "script": "examples/support_agent.py",
+      "input": "cust3:t8",
+      "baseline_model": "vernier-baseline-local-v1",
+      "event_count": 22,
+      "projected_steps": 17,
+      "path": "runs/401ea32de819476cb273a8a10891bd23"
+    },
+    {
+      "run_id": "ab1bff5911ca4068b100968284355b3a",
+      "shape": "coding",
+      "label": "coding_01",
+      "script": "examples/coding_agent.py",
+      "input": "payments",
+      "baseline_model": "vernier-baseline-local-v1",
+      "event_count": 22,
+      "projected_steps": 17,
+      "path": "runs/ab1bff5911ca4068b100968284355b3a"
+    },
+    {
+      "run_id": "0d4b0a7732d9480cb254651994caea6b",
+      "shape": "coding",
+      "label": "coding_02",
+      "script": "examples/coding_agent.py",
+      "input": "auth",
+      "baseline_model": "vernier-baseline-local-v1",
+      "event_count": 22,
+      "projected_steps": 17,
+      "path": "runs/0d4b0a7732d9480cb254651994caea6b"
+    },
+    {
+      "run_id": "fefb9987a2394c50a79441be0c3b8b83",
+      "shape": "coding",
+      "label": "coding_03",
+      "script": "examples/coding_agent.py",
+      "input": "cache",
+      "baseline_model": "vernier-baseline-local-v1",
+      "event_count": 22,
+      "projected_steps": 17,
+      "path": "runs/fefb9987a2394c50a79441be0c3b8b83"
+    },
+    {
+      "run_id": "cf62de21c4704d2fba0d9b08bcd7a2c2",
+      "shape": "coding",
+      "label": "coding_04",
+      "script": "examples/coding_agent.py",
+      "input": "parser",
+      "baseline_model": "vernier-baseline-local-v1",
+      "event_count": 22,
+      "projected_steps": 17,
+      "path": "runs/cf62de21c4704d2fba0d9b08bcd7a2c2"
+    },
+    {
+      "run_id": "8a7357027ed24b49ba2b0a6cfafc4573",
+      "shape": "coding",
+      "label": "coding_05",
+      "script": "examples/coding_agent.py",
+      "input": "scheduler",
+      "baseline_model": "vernier-baseline-local-v1",
+      "event_count": 22,
+      "projected_steps": 17,
+      "path": "runs/8a7357027ed24b49ba2b0a6cfafc4573"
+    },
+    {
+      "run_id": "2e0f7d4cf7264c43bac12985fd44a179",
+      "shape": "booking",
+      "label": "booking_01",
+      "script": "examples/booking_agent.py",
+      "input": "SFO-JFK:ada",
+      "baseline_model": "vernier-baseline-local-v1",
+      "event_count": 22,
+      "projected_steps": 17,
+      "path": "runs/2e0f7d4cf7264c43bac12985fd44a179"
+    },
+    {
+      "run_id": "d8461ff0602444018adda52512703fba",
+      "shape": "booking",
+      "label": "booking_02",
+      "script": "examples/booking_agent.py",
+      "input": "LAX-SEA:bob",
+      "baseline_model": "vernier-baseline-local-v1",
+      "event_count": 22,
+      "projected_steps": 17,
+      "path": "runs/d8461ff0602444018adda52512703fba"
+    },
+    {
+      "run_id": "9b8aa2ad5b70483896c4f5c9593cf792",
+      "shape": "booking",
+      "label": "booking_03",
+      "script": "examples/booking_agent.py",
+      "input": "ORD-MIA:cara",
+      "baseline_model": "vernier-baseline-local-v1",
+      "event_count": 22,
+      "projected_steps": 17,
+      "path": "runs/9b8aa2ad5b70483896c4f5c9593cf792"
+    },
+    {
+      "run_id": "4b2551fc5c9040d38dcb5a2f7d969553",
+      "shape": "booking",
+      "label": "booking_04",
+      "script": "examples/booking_agent.py",
+      "input": "DEN-BOS:dan",
+      "baseline_model": "vernier-baseline-local-v1",
+      "event_count": 22,
+      "projected_steps": 17,
+      "path": "runs/4b2551fc5c9040d38dcb5a2f7d969553"
+    },
+    {
+      "run_id": "b2620195a04b4ce68464586198d13959",
+      "shape": "booking",
+      "label": "booking_05",
+      "script": "examples/booking_agent.py",
+      "input": "ATL-DFW:eve",
+      "baseline_model": "vernier-baseline-local-v1",
+      "event_count": 22,
+      "projected_steps": 17,
+      "path": "runs/b2620195a04b4ce68464586198d13959"
+    },
+    {
+      "run_id": "63bb7bd668cd4efe99c0659e76092b1d",
+      "shape": "router",
+      "label": "router_01",
+      "script": "examples/router_agent.py",
+      "input": "weather Paris",
+      "baseline_model": "vernier-baseline-local-v1",
+      "event_count": 22,
+      "projected_steps": 17,
+      "path": "runs/63bb7bd668cd4efe99c0659e76092b1d"
+    },
+    {
+      "run_id": "bae5bfbcce92455ab2d6d65579a5a4a2",
+      "shape": "router",
+      "label": "router_02",
+      "script": "examples/router_agent.py",
+      "input": "math 42",
+      "baseline_model": "vernier-baseline-local-v1",
+      "event_count": 22,
+      "projected_steps": 17,
+      "path": "runs/bae5bfbcce92455ab2d6d65579a5a4a2"
+    },
+    {
+      "run_id": "1dc68714f005461ea24353fa7d5ace84",
+      "shape": "router",
+      "label": "router_03",
+      "script": "examples/router_agent.py",
+      "input": "search quantum dots",
+      "baseline_model": "vernier-baseline-local-v1",
+      "event_count": 22,
+      "projected_steps": 17,
+      "path": "runs/1dc68714f005461ea24353fa7d5ace84"
+    },
+    {
+      "run_id": "b9e6f050be1647048b25229f73bf5f64",
+      "shape": "router",
+      "label": "router_04",
+      "script": "examples/router_agent.py",
+      "input": "weather Tokyo",
+      "baseline_model": "vernier-baseline-local-v1",
+      "event_count": 22,
+      "projected_steps": 17,
+      "path": "runs/b9e6f050be1647048b25229f73bf5f64"
+    },
+    {
+      "run_id": "cd7941317c6644b7919c88244bb6b442",
+      "shape": "router",
+      "label": "router_05",
+      "script": "examples/router_agent.py",
+      "input": "math 7",
+      "baseline_model": "vernier-baseline-local-v1",
+      "event_count": 22,
+      "projected_steps": 17,
+      "path": "runs/cd7941317c6644b7919c88244bb6b442"
+    }
+  ]
+}

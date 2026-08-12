@@ -1,0 +1,1 @@
+{"command":["/home/gautamtalksdev/projects/Vernier/.venv/bin/python3","/home/gautamtalksdev/projects/Vernier/examples/router_agent.py","--input","search quantum dots","--model","qwen3:4b-instruct"],"cwd":"/home/gautamtalksdev/projects/Vernier","mode":"live_diff","replay_of":"df7c021d8a264b63b7b59d978f2c5898","run_id":"0aa979cb12d749e6b0e8b01e97789f51"}

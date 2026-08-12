@@ -13,6 +13,10 @@ pointers = [
   "/headers/request_id",
   "/headers/trace_id",
   "/headers/x-request-id",
+  # Ollama / OpenAI tool-call correlation nonces (fresh per call; not UUIDs).
+  "/id",
+  "/tool_call_id",
+  "/tool_calls/0/id",
 ]
 strip_uuid_values = true
 strip_iso_timestamps = true

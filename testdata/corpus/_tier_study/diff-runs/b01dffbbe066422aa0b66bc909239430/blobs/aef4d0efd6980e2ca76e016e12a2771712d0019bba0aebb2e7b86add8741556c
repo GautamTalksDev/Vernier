@@ -1,0 +1,1 @@
+{"command":["/home/gautamtalksdev/projects/Vernier/.venv/bin/python3","/home/gautamtalksdev/projects/Vernier/examples/booking_agent.py","--input","ORD-MIA:cara","--model","qwen3:4b-instruct"],"cwd":"/home/gautamtalksdev/projects/Vernier","mode":"live_diff","replay_of":"0c89b26271f54a7d99c4cd57b09c0ae2","run_id":"b01dffbbe066422aa0b66bc909239430"}

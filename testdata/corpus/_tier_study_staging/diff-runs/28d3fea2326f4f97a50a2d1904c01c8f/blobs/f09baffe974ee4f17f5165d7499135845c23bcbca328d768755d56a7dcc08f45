@@ -1,0 +1,1 @@
+{"command":["/home/gautamtalksdev/projects/Vernier/.venv/bin/python3","/home/gautamtalksdev/projects/Vernier/examples/booking_agent.py","--input","LAX-SEA:bob","--model","qwen3:4b-instruct"],"cwd":"/home/gautamtalksdev/projects/Vernier","mode":"live_diff","replay_of":"b12964daa93549fca049f1a3a58136c6","run_id":"28d3fea2326f4f97a50a2d1904c01c8f"}

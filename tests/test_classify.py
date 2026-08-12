@@ -73,6 +73,7 @@ def test_fixture_severity_and_rule_ids(case_dir: Path) -> None:
         "D04_NM03_request_id_pointer",
         "D04_NM04_trace_and_nonce",
         "D04_NM05_nested_header_request_id",
+        "D04_NM06_tool_call_id",
     ],
 )
 def test_d04_near_miss_no_false_positive(case_name: str) -> None:

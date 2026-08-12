@@ -1,0 +1,1 @@
+{"id":"chatcmpl-733","object":"chat.completion","created":1786545363,"model":"llama3.1:8b","system_fingerprint":"fp_ollama","choices":[{"index":0,"message":{"role":"assistant","content":"The weather in Tokyo is currently sunny with a high of 22°C and a low of 15°C."},"finish_reason":"stop"}],"usage":{"prompt_tokens":292,"completion_tokens":23,"total_tokens":315}}

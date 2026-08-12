@@ -1,0 +1,190 @@
+name: Vernier Gate
+description: >
+  Run vern gate on a recorded corpus, post a PR summary comment, upload the
+  JSON report artifact, and set a commit status. Zero Vernier secrets — only
+  your existing model provider key (if live-diff needs one).
+author: Vernier Contributors
+
+branding:
+  icon: shield
+  color: gray-dark
+
+inputs:
+  corpus-path:
+    description: Path to the recorded corpus directory (scenario/run or run folders).
+    required: true
+    default: vernier-corpus
+  max-severity:
+    description: Fail when any run's severity is above this level.
+    required: false
+    default: MEDIUM
+  model:
+    description: Candidate model override for live re-drives (optional).
+    required: false
+    default: ""
+  baseline-model:
+    description: Baseline model label for the report (metadata only).
+    required: false
+    default: ""
+  fail-on-miss:
+    description: Exit non-zero on hard ReplayMiss during re-drive.
+    required: false
+    default: "true"
+  prompt-file:
+    description: Optional system prompt override file (relative to repo root).
+    required: false
+    default: ""
+  vernier-ref:
+    description: Git ref / path to install Vernier from (pip). Empty = PyPI vernier if published; default installs from this action repo.
+    required: false
+    default: ""
+  github-token:
+    description: Token for PR comments and commit statuses (defaults to GITHUB_TOKEN).
+    required: false
+    default: ${{ github.token }}
+
+outputs:
+  worst-severity:
+    description: Worst severity across gated runs.
+    value: ${{ steps.gate.outputs.worst-severity }}
+  rule-ids:
+    description: Sorted unique rule IDs that fired.
+    value: ${{ steps.gate.outputs.rule-ids }}
+  n-runs:
+    description: Number of runs checked.
+    value: ${{ steps.gate.outputs.n-runs }}
+  report-path:
+    description: Path to the JSON gate report.
+    value: ${{ steps.gate.outputs.report-path }}
+
+runs:
+  using: composite
+  steps:
+    - name: Install uv
+      uses: astral-sh/setup-uv@v5
+      with:
+        python-version: "3.12"
+        enable-cache: true
+
+    - name: Install Vernier
+      shell: bash
+      env:
+        VERNIER_REF: ${{ inputs.vernier-ref }}
+        GITHUB_ACTION_PATH: ${{ github.action_path }}
+      run: bash "${{ github.action_path }}/action/install.sh"
+
+    - name: Run vern gate
+      id: gate
+      shell: bash
+      env:
+        CORPUS_PATH: ${{ inputs.corpus-path }}
+        MAX_SEVERITY: ${{ inputs.max-severity }}
+        MODEL: ${{ inputs.model }}
+        BASELINE_MODEL: ${{ inputs.baseline-model }}
+        FAIL_ON_MISS: ${{ inputs.fail-on-miss }}
+        PROMPT_FILE: ${{ inputs.prompt-file }}
+      run: |
+        set -euo pipefail
+        mkdir -p .vernier/ci
+        REPORT=".vernier/ci/gate-report.json"
+        COMMENT=".vernier/ci/gate-comment.md"
+        ARGS=(gate --corpus "${CORPUS_PATH}" --max-severity "${MAX_SEVERITY}"
+              --json-out "${REPORT}" --comment-out "${COMMENT}"
+              --out .vernier/ci/gate-runs)
+        if [ -n "${MODEL}" ]; then
+          ARGS+=(--model "${MODEL}")
+        fi
+        if [ -n "${BASELINE_MODEL}" ]; then
+          ARGS+=(--baseline-model "${BASELINE_MODEL}")
+        fi
+        if [ -n "${PROMPT_FILE}" ]; then
+          ARGS+=(--prompt-file "${PROMPT_FILE}")
+        fi
+        case "${FAIL_ON_MISS}" in
+          true|TRUE|yes|YES|1) ARGS+=(--fail-on-miss) ;;
+          *) ARGS+=(--no-fail-on-miss) ;;
+        esac
+        set +e
+        vern "${ARGS[@]}"
+        RC=$?
+        set -e
+        echo "gate-exit=${RC}" >> "${GITHUB_OUTPUT}"
+        echo "report-path=${REPORT}" >> "${GITHUB_OUTPUT}"
+        echo "comment-path=${COMMENT}" >> "${GITHUB_OUTPUT}"
+        if [ -f "${REPORT}" ]; then
+          python3 "${{ github.action_path }}/action/emit_outputs.py" "${REPORT}" >> "${GITHUB_OUTPUT}"
+        else
+          echo "worst-severity=ERROR" >> "${GITHUB_OUTPUT}"
+          echo "rule-ids=" >> "${GITHUB_OUTPUT}"
+          echo "n-runs=0" >> "${GITHUB_OUTPUT}"
+        fi
+        exit "${RC}"
+
+    - name: Upload gate report
+      if: always()
+      uses: actions/upload-artifact@v4
+      with:
+        name: vernier-gate-report
+        path: |
+          .vernier/ci/gate-report.json
+          .vernier/ci/gate-comment.md
+        if-no-files-found: warn
+
+    - name: Post PR comment
+      if: always() && github.event_name == 'pull_request'
+      uses: actions/github-script@v7
+      env:
+        COMMENT_PATH: .vernier/ci/gate-comment.md
+      with:
+        github-token: ${{ inputs.github-token }}
+        script: |
+          const fs = require('fs');
+          const path = process.env.COMMENT_PATH;
+          if (!fs.existsSync(path)) {
+            core.warning('No Vernier comment file; skipping PR comment');
+            return;
+          }
+          const body = fs.readFileSync(path, 'utf8');
+          const { owner, repo } = context.repo;
+          const issue_number = context.issue.number;
+          const marker = '<!-- vernier-gate -->';
+          const { data: comments } = await github.rest.issues.listComments({
+            owner, repo, issue_number, per_page: 100,
+          });
+          const existing = comments.find(c => c.user.type === 'Bot' && c.body.includes(marker));
+          if (existing) {
+            await github.rest.issues.updateComment({
+              owner, repo, comment_id: existing.id, body,
+            });
+          } else {
+            await github.rest.issues.createComment({
+              owner, repo, issue_number, body,
+            });
+          }
+
+    - name: Set commit status
+      if: always()
+      uses: actions/github-script@v7
+      env:
+        WORST: ${{ steps.gate.outputs.worst-severity }}
+        RULES: ${{ steps.gate.outputs.rule-ids }}
+        N_RUNS: ${{ steps.gate.outputs.n-runs }}
+        GATE_EXIT: ${{ steps.gate.outputs.gate-exit }}
+      with:
+        github-token: ${{ inputs.github-token }}
+        script: |
+          const exit = process.env.GATE_EXIT || '1';
+          const state = exit === '0' ? 'success' : (exit === '2' ? 'error' : 'failure');
+          const worst = process.env.WORST || 'UNKNOWN';
+          const rules = process.env.RULES || '';
+          const n = process.env.N_RUNS || '0';
+          const desc = `n=${n} worst=${worst}` + (rules ? ` rules=${rules}` : '');
+          await github.rest.repos.createCommitStatus({
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            sha: context.sha,
+            state,
+            context: 'vernier/gate',
+            description: desc.slice(0, 140),
+            target_url: `${context.serverUrl}/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId}`,
+          });

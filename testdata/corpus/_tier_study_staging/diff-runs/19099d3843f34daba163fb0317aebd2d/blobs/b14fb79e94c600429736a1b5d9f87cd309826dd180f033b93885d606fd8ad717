@@ -1,0 +1,1 @@
+{"command":["/home/gautamtalksdev/projects/Vernier/.venv/bin/python3","/home/gautamtalksdev/projects/Vernier/examples/research_agent.py","--input","urban-heat","--model","qwen3:4b-instruct"],"cwd":"/home/gautamtalksdev/projects/Vernier","mode":"live_diff","replay_of":"b5dac1b7a53141d9810c7e6e1c8c483c","run_id":"19099d3843f34daba163fb0317aebd2d"}

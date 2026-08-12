@@ -1,0 +1,181 @@
+run_id,label,endpoint,model,baseline_model,candidate_model,temperature,seed,num_ctx,stream,status,baseline_tool_count,candidate_tool_count,severity,rule_ids,wall_clock_s,harness_fault,exit_code,transport_log
+69f9854693f84c498271b9273249efa2,research_01,http://localhost:11434/v1,qwen3:4b-instruct,qwen3:4b-instruct,qwen3:4b-instruct,0,42,16384,false,completed,4,4,NONE,,40.784,,0,"vern diff: source=69f9854693f84c498271b9273249efa2
+vern diff: model=qwen3:4b-instruct
+vern diff: candidate=d52a04cad233473cb704ce47633679fc
+
+{""alignment"":{""all_matched"":true,""length"":14},""applied_ignores"":[],""candidate_run_id"":""d52a04cad233473cb704ce47633679fc"",""diverging_region"":[],""schema_version"":""vernier-report-v1"",""source_run_id"":""69f9854693f84c498271b9273249efa2"",""verdict"":{""applied_ignores"":[],""fired"":[],""harness_fault"":null,""rule_ids"":[],""severity"":""NONE"",""spec_version"":""divergence-v1""}}
+"
+632ab1e9abab4ebbb8fa11b7d92e1e4a,research_02,http://localhost:11434/v1,qwen3:4b-instruct,qwen3:4b-instruct,qwen3:4b-instruct,0,42,16384,false,completed,4,4,NONE,,55.398,,0,"vern diff: source=632ab1e9abab4ebbb8fa11b7d92e1e4a
+vern diff: model=qwen3:4b-instruct
+vern diff: candidate=fb098a99c2d94230856629a6d2bff119
+
+{""alignment"":{""all_matched"":true,""length"":14},""applied_ignores"":[],""candidate_run_id"":""fb098a99c2d94230856629a6d2bff119"",""diverging_region"":[],""schema_version"":""vernier-report-v1"",""source_run_id"":""632ab1e9abab4ebbb8fa11b7d92e1e4a"",""verdict"":{""applied_ignores"":[],""fired"":[],""harness_fault"":null,""rule_ids"":[],""severity"":""NONE"",""spec_version"":""divergence-v1""}}
+"
+7c5c337e6a5b437293d5223e7a75e4d1,research_03,http://localhost:11434/v1,qwen3:4b-instruct,qwen3:4b-instruct,qwen3:4b-instruct,0,42,16384,false,completed,4,4,NONE,,51.281,,0,"vern diff: source=7c5c337e6a5b437293d5223e7a75e4d1
+vern diff: model=qwen3:4b-instruct
+vern diff: candidate=7be46914521947ffa0410341506c0909
+
+{""alignment"":{""all_matched"":true,""length"":14},""applied_ignores"":[],""candidate_run_id"":""7be46914521947ffa0410341506c0909"",""diverging_region"":[],""schema_version"":""vernier-report-v1"",""source_run_id"":""7c5c337e6a5b437293d5223e7a75e4d1"",""verdict"":{""applied_ignores"":[],""fired"":[],""harness_fault"":null,""rule_ids"":[],""severity"":""NONE"",""spec_version"":""divergence-v1""}}
+"
+b5dac1b7a53141d9810c7e6e1c8c483c,research_04,http://localhost:11434/v1,qwen3:4b-instruct,qwen3:4b-instruct,qwen3:4b-instruct,0,42,16384,false,completed,4,4,NONE,,50.555,,0,"vern diff: source=b5dac1b7a53141d9810c7e6e1c8c483c
+vern diff: model=qwen3:4b-instruct
+vern diff: candidate=bc0810d568fa45cfa42bf7c6cdec7a68
+
+{""alignment"":{""all_matched"":true,""length"":14},""applied_ignores"":[],""candidate_run_id"":""bc0810d568fa45cfa42bf7c6cdec7a68"",""diverging_region"":[],""schema_version"":""vernier-report-v1"",""source_run_id"":""b5dac1b7a53141d9810c7e6e1c8c483c"",""verdict"":{""applied_ignores"":[],""fired"":[],""harness_fault"":null,""rule_ids"":[],""severity"":""NONE"",""spec_version"":""divergence-v1""}}
+"
+4a826010b57749e0a816b5ebd23b9fe1,research_05,http://localhost:11434/v1,qwen3:4b-instruct,qwen3:4b-instruct,qwen3:4b-instruct,0,42,16384,false,completed,4,4,NONE,,38.968,,0,"vern diff: source=4a826010b57749e0a816b5ebd23b9fe1
+vern diff: model=qwen3:4b-instruct
+vern diff: candidate=b98906539c774b4c9700c03995bf3476
+
+{""alignment"":{""all_matched"":true,""length"":14},""applied_ignores"":[],""candidate_run_id"":""b98906539c774b4c9700c03995bf3476"",""diverging_region"":[],""schema_version"":""vernier-report-v1"",""source_run_id"":""4a826010b57749e0a816b5ebd23b9fe1"",""verdict"":{""applied_ignores"":[],""fired"":[],""harness_fault"":null,""rule_ids"":[],""severity"":""NONE"",""spec_version"":""divergence-v1""}}
+"
+b1a50b345020492eab1454e0b164160f,data_01,http://localhost:11434/v1,qwen3:4b-instruct,qwen3:4b-instruct,qwen3:4b-instruct,0,42,16384,false,completed,4,4,NONE,,23.200,,0,"vern diff: source=b1a50b345020492eab1454e0b164160f
+vern diff: model=qwen3:4b-instruct
+vern diff: candidate=6c5dda84ccd24ce982b11c4b9c00ed94
+
+{""alignment"":{""all_matched"":true,""length"":14},""applied_ignores"":[],""candidate_run_id"":""6c5dda84ccd24ce982b11c4b9c00ed94"",""diverging_region"":[],""schema_version"":""vernier-report-v1"",""source_run_id"":""b1a50b345020492eab1454e0b164160f"",""verdict"":{""applied_ignores"":[],""fired"":[],""harness_fault"":null,""rule_ids"":[],""severity"":""NONE"",""spec_version"":""divergence-v1""}}
+"
+a1cf51d795c247869d8782522d4e1e5d,data_02,http://localhost:11434/v1,qwen3:4b-instruct,qwen3:4b-instruct,qwen3:4b-instruct,0,42,16384,false,completed,4,4,NONE,,22.415,,0,"vern diff: source=a1cf51d795c247869d8782522d4e1e5d
+vern diff: model=qwen3:4b-instruct
+vern diff: candidate=92e4a7b5467545eeab9792d88906f78d
+
+{""alignment"":{""all_matched"":true,""length"":14},""applied_ignores"":[],""candidate_run_id"":""92e4a7b5467545eeab9792d88906f78d"",""diverging_region"":[],""schema_version"":""vernier-report-v1"",""source_run_id"":""a1cf51d795c247869d8782522d4e1e5d"",""verdict"":{""applied_ignores"":[],""fired"":[],""harness_fault"":null,""rule_ids"":[],""severity"":""NONE"",""spec_version"":""divergence-v1""}}
+"
+4ab221a85e3d413c843ead40d50fd936,data_03,http://localhost:11434/v1,qwen3:4b-instruct,qwen3:4b-instruct,qwen3:4b-instruct,0,42,16384,false,completed,4,4,NONE,,22.246,,0,"vern diff: source=4ab221a85e3d413c843ead40d50fd936
+vern diff: model=qwen3:4b-instruct
+vern diff: candidate=bdf2dddb42914aa398583e09bb22e70e
+
+{""alignment"":{""all_matched"":true,""length"":14},""applied_ignores"":[],""candidate_run_id"":""bdf2dddb42914aa398583e09bb22e70e"",""diverging_region"":[],""schema_version"":""vernier-report-v1"",""source_run_id"":""4ab221a85e3d413c843ead40d50fd936"",""verdict"":{""applied_ignores"":[],""fired"":[],""harness_fault"":null,""rule_ids"":[],""severity"":""NONE"",""spec_version"":""divergence-v1""}}
+"
+0b6dfbe2a21b482dbff0a7e1ff174b9f,data_04,http://localhost:11434/v1,qwen3:4b-instruct,qwen3:4b-instruct,qwen3:4b-instruct,0,42,16384,false,completed,4,4,NONE,,22.935,,0,"vern diff: source=0b6dfbe2a21b482dbff0a7e1ff174b9f
+vern diff: model=qwen3:4b-instruct
+vern diff: candidate=0d829b4662b34db983305ad0cb0a7725
+
+{""alignment"":{""all_matched"":true,""length"":14},""applied_ignores"":[],""candidate_run_id"":""0d829b4662b34db983305ad0cb0a7725"",""diverging_region"":[],""schema_version"":""vernier-report-v1"",""source_run_id"":""0b6dfbe2a21b482dbff0a7e1ff174b9f"",""verdict"":{""applied_ignores"":[],""fired"":[],""harness_fault"":null,""rule_ids"":[],""severity"":""NONE"",""spec_version"":""divergence-v1""}}
+"
+3fbe0bbe1ca349b995a02044827a3ff5,data_05,http://localhost:11434/v1,qwen3:4b-instruct,qwen3:4b-instruct,qwen3:4b-instruct,0,42,16384,false,completed,4,4,NONE,,22.638,,0,"vern diff: source=3fbe0bbe1ca349b995a02044827a3ff5
+vern diff: model=qwen3:4b-instruct
+vern diff: candidate=32744a5268a94c4f84bdd0a8f9235b84
+
+{""alignment"":{""all_matched"":true,""length"":14},""applied_ignores"":[],""candidate_run_id"":""32744a5268a94c4f84bdd0a8f9235b84"",""diverging_region"":[],""schema_version"":""vernier-report-v1"",""source_run_id"":""3fbe0bbe1ca349b995a02044827a3ff5"",""verdict"":{""applied_ignores"":[],""fired"":[],""harness_fault"":null,""rule_ids"":[],""severity"":""NONE"",""spec_version"":""divergence-v1""}}
+"
+2f73c583fee94903ab985c21d9a5f724,support_01,http://localhost:11434/v1,qwen3:4b-instruct,qwen3:4b-instruct,qwen3:4b-instruct,0,42,16384,false,completed,4,4,NONE,,19.263,,0,"vern diff: source=2f73c583fee94903ab985c21d9a5f724
+vern diff: model=qwen3:4b-instruct
+vern diff: candidate=244dc3e25b8d4e81894dbdd105b72f2c
+
+{""alignment"":{""all_matched"":true,""length"":13},""applied_ignores"":[],""candidate_run_id"":""244dc3e25b8d4e81894dbdd105b72f2c"",""diverging_region"":[],""schema_version"":""vernier-report-v1"",""source_run_id"":""2f73c583fee94903ab985c21d9a5f724"",""verdict"":{""applied_ignores"":[],""fired"":[],""harness_fault"":null,""rule_ids"":[],""severity"":""NONE"",""spec_version"":""divergence-v1""}}
+"
+6ca3b6758e0f4747b576659daddcfee0,support_02,http://localhost:11434/v1,qwen3:4b-instruct,qwen3:4b-instruct,qwen3:4b-instruct,0,42,16384,false,completed,4,4,NONE,,18.163,,0,"vern diff: source=6ca3b6758e0f4747b576659daddcfee0
+vern diff: model=qwen3:4b-instruct
+vern diff: candidate=12cc35014bd04827a89723e5ed2e53cc
+
+{""alignment"":{""all_matched"":true,""length"":13},""applied_ignores"":[],""candidate_run_id"":""12cc35014bd04827a89723e5ed2e53cc"",""diverging_region"":[],""schema_version"":""vernier-report-v1"",""source_run_id"":""6ca3b6758e0f4747b576659daddcfee0"",""verdict"":{""applied_ignores"":[],""fired"":[],""harness_fault"":null,""rule_ids"":[],""severity"":""NONE"",""spec_version"":""divergence-v1""}}
+"
+05026dc070aa4a8fab4842412ba3a6ff,support_03,http://localhost:11434/v1,qwen3:4b-instruct,qwen3:4b-instruct,qwen3:4b-instruct,0,42,16384,false,completed,4,4,NONE,,18.621,,0,"vern diff: source=05026dc070aa4a8fab4842412ba3a6ff
+vern diff: model=qwen3:4b-instruct
+vern diff: candidate=0f68fd97a71b47fbaa2b91c18809ffb3
+
+{""alignment"":{""all_matched"":true,""length"":13},""applied_ignores"":[],""candidate_run_id"":""0f68fd97a71b47fbaa2b91c18809ffb3"",""diverging_region"":[],""schema_version"":""vernier-report-v1"",""source_run_id"":""05026dc070aa4a8fab4842412ba3a6ff"",""verdict"":{""applied_ignores"":[],""fired"":[],""harness_fault"":null,""rule_ids"":[],""severity"":""NONE"",""spec_version"":""divergence-v1""}}
+"
+b80100e7fc304e8daa74bfdc70fb74e1,support_04,http://localhost:11434/v1,qwen3:4b-instruct,qwen3:4b-instruct,qwen3:4b-instruct,0,42,16384,false,completed,4,4,NONE,,19.052,,0,"vern diff: source=b80100e7fc304e8daa74bfdc70fb74e1
+vern diff: model=qwen3:4b-instruct
+vern diff: candidate=1224e888ea494411a055e2654ffa9e42
+
+{""alignment"":{""all_matched"":true,""length"":13},""applied_ignores"":[],""candidate_run_id"":""1224e888ea494411a055e2654ffa9e42"",""diverging_region"":[],""schema_version"":""vernier-report-v1"",""source_run_id"":""b80100e7fc304e8daa74bfdc70fb74e1"",""verdict"":{""applied_ignores"":[],""fired"":[],""harness_fault"":null,""rule_ids"":[],""severity"":""NONE"",""spec_version"":""divergence-v1""}}
+"
+12830368b9b946d8a97ec3ed18cbe3de,support_05,http://localhost:11434/v1,qwen3:4b-instruct,qwen3:4b-instruct,qwen3:4b-instruct,0,42,16384,false,completed,4,4,NONE,,23.556,,0,"vern diff: source=12830368b9b946d8a97ec3ed18cbe3de
+vern diff: model=qwen3:4b-instruct
+vern diff: candidate=6dae5d115c614b079f5a749ddf786a25
+
+{""alignment"":{""all_matched"":true,""length"":13},""applied_ignores"":[],""candidate_run_id"":""6dae5d115c614b079f5a749ddf786a25"",""diverging_region"":[],""schema_version"":""vernier-report-v1"",""source_run_id"":""12830368b9b946d8a97ec3ed18cbe3de"",""verdict"":{""applied_ignores"":[],""fired"":[],""harness_fault"":null,""rule_ids"":[],""severity"":""NONE"",""spec_version"":""divergence-v1""}}
+"
+55f3d33afc3142c594d2730e0452a59e,coding_01,http://localhost:11434/v1,qwen3:4b-instruct,qwen3:4b-instruct,qwen3:4b-instruct,0,42,16384,false,completed,4,4,NONE,,29.301,,0,"vern diff: source=55f3d33afc3142c594d2730e0452a59e
+vern diff: model=qwen3:4b-instruct
+vern diff: candidate=0b35997c29ad4b6797afffc090d55255
+
+{""alignment"":{""all_matched"":true,""length"":14},""applied_ignores"":[],""candidate_run_id"":""0b35997c29ad4b6797afffc090d55255"",""diverging_region"":[],""schema_version"":""vernier-report-v1"",""source_run_id"":""55f3d33afc3142c594d2730e0452a59e"",""verdict"":{""applied_ignores"":[],""fired"":[],""harness_fault"":null,""rule_ids"":[],""severity"":""NONE"",""spec_version"":""divergence-v1""}}
+"
+2cc6f68fd4ea4e2bbbaf6ecf4a0126e1,coding_02,http://localhost:11434/v1,qwen3:4b-instruct,qwen3:4b-instruct,qwen3:4b-instruct,0,42,16384,false,completed,4,4,NONE,,23.781,,0,"vern diff: source=2cc6f68fd4ea4e2bbbaf6ecf4a0126e1
+vern diff: model=qwen3:4b-instruct
+vern diff: candidate=4222285def614670af18f781f5a945de
+
+{""alignment"":{""all_matched"":true,""length"":14},""applied_ignores"":[],""candidate_run_id"":""4222285def614670af18f781f5a945de"",""diverging_region"":[],""schema_version"":""vernier-report-v1"",""source_run_id"":""2cc6f68fd4ea4e2bbbaf6ecf4a0126e1"",""verdict"":{""applied_ignores"":[],""fired"":[],""harness_fault"":null,""rule_ids"":[],""severity"":""NONE"",""spec_version"":""divergence-v1""}}
+"
+74fa58178abe4afea29fbae53f1985b4,coding_03,http://localhost:11434/v1,qwen3:4b-instruct,qwen3:4b-instruct,qwen3:4b-instruct,0,42,16384,false,completed,4,4,NONE,,21.156,,0,"vern diff: source=74fa58178abe4afea29fbae53f1985b4
+vern diff: model=qwen3:4b-instruct
+vern diff: candidate=1bea99cfe77a472191b66943a86a8037
+
+{""alignment"":{""all_matched"":true,""length"":14},""applied_ignores"":[],""candidate_run_id"":""1bea99cfe77a472191b66943a86a8037"",""diverging_region"":[],""schema_version"":""vernier-report-v1"",""source_run_id"":""74fa58178abe4afea29fbae53f1985b4"",""verdict"":{""applied_ignores"":[],""fired"":[],""harness_fault"":null,""rule_ids"":[],""severity"":""NONE"",""spec_version"":""divergence-v1""}}
+"
+b4d1060a2e714783ab55040a13e459cc,coding_04,http://localhost:11434/v1,qwen3:4b-instruct,qwen3:4b-instruct,qwen3:4b-instruct,0,42,16384,false,completed,4,4,NONE,,20.152,,0,"vern diff: source=b4d1060a2e714783ab55040a13e459cc
+vern diff: model=qwen3:4b-instruct
+vern diff: candidate=a632a7ee41c14b6cb2e57d32d87f0bfb
+
+{""alignment"":{""all_matched"":true,""length"":14},""applied_ignores"":[],""candidate_run_id"":""a632a7ee41c14b6cb2e57d32d87f0bfb"",""diverging_region"":[],""schema_version"":""vernier-report-v1"",""source_run_id"":""b4d1060a2e714783ab55040a13e459cc"",""verdict"":{""applied_ignores"":[],""fired"":[],""harness_fault"":null,""rule_ids"":[],""severity"":""NONE"",""spec_version"":""divergence-v1""}}
+"
+0b3af09241b84a91b11a4619698766d8,coding_05,http://localhost:11434/v1,qwen3:4b-instruct,qwen3:4b-instruct,qwen3:4b-instruct,0,42,16384,false,completed,4,4,NONE,,21.762,,0,"vern diff: source=0b3af09241b84a91b11a4619698766d8
+vern diff: model=qwen3:4b-instruct
+vern diff: candidate=f136302f003b48048b27d4fc35bb8b9d
+
+{""alignment"":{""all_matched"":true,""length"":14},""applied_ignores"":[],""candidate_run_id"":""f136302f003b48048b27d4fc35bb8b9d"",""diverging_region"":[],""schema_version"":""vernier-report-v1"",""source_run_id"":""0b3af09241b84a91b11a4619698766d8"",""verdict"":{""applied_ignores"":[],""fired"":[],""harness_fault"":null,""rule_ids"":[],""severity"":""NONE"",""spec_version"":""divergence-v1""}}
+"
+62719e5fed264f1589023c1b04728725,booking_01,http://localhost:11434/v1,qwen3:4b-instruct,qwen3:4b-instruct,qwen3:4b-instruct,0,42,16384,false,completed,4,4,NONE,,18.163,,0,"vern diff: source=62719e5fed264f1589023c1b04728725
+vern diff: model=qwen3:4b-instruct
+vern diff: candidate=52817696fb824dd39915c85724f4ee85
+
+{""alignment"":{""all_matched"":true,""length"":14},""applied_ignores"":[],""candidate_run_id"":""52817696fb824dd39915c85724f4ee85"",""diverging_region"":[],""schema_version"":""vernier-report-v1"",""source_run_id"":""62719e5fed264f1589023c1b04728725"",""verdict"":{""applied_ignores"":[],""fired"":[],""harness_fault"":null,""rule_ids"":[],""severity"":""NONE"",""spec_version"":""divergence-v1""}}
+"
+b12964daa93549fca049f1a3a58136c6,booking_02,http://localhost:11434/v1,qwen3:4b-instruct,qwen3:4b-instruct,qwen3:4b-instruct,0,42,16384,false,completed,4,4,NONE,,15.679,,0,"vern diff: source=b12964daa93549fca049f1a3a58136c6
+vern diff: model=qwen3:4b-instruct
+vern diff: candidate=53c390c291bd44f68965238989416e68
+
+{""alignment"":{""all_matched"":true,""length"":14},""applied_ignores"":[],""candidate_run_id"":""53c390c291bd44f68965238989416e68"",""diverging_region"":[],""schema_version"":""vernier-report-v1"",""source_run_id"":""b12964daa93549fca049f1a3a58136c6"",""verdict"":{""applied_ignores"":[],""fired"":[],""harness_fault"":null,""rule_ids"":[],""severity"":""NONE"",""spec_version"":""divergence-v1""}}
+"
+0c89b26271f54a7d99c4cd57b09c0ae2,booking_03,http://localhost:11434/v1,qwen3:4b-instruct,qwen3:4b-instruct,qwen3:4b-instruct,0,42,16384,false,completed,4,4,NONE,,15.835,,0,"vern diff: source=0c89b26271f54a7d99c4cd57b09c0ae2
+vern diff: model=qwen3:4b-instruct
+vern diff: candidate=f220e340132345b79f1fc279d6c7c389
+
+{""alignment"":{""all_matched"":true,""length"":14},""applied_ignores"":[],""candidate_run_id"":""f220e340132345b79f1fc279d6c7c389"",""diverging_region"":[],""schema_version"":""vernier-report-v1"",""source_run_id"":""0c89b26271f54a7d99c4cd57b09c0ae2"",""verdict"":{""applied_ignores"":[],""fired"":[],""harness_fault"":null,""rule_ids"":[],""severity"":""NONE"",""spec_version"":""divergence-v1""}}
+"
+69a489887e8440d89bccf73a5f8306c5,booking_04,http://localhost:11434/v1,qwen3:4b-instruct,qwen3:4b-instruct,qwen3:4b-instruct,0,42,16384,false,completed,4,4,NONE,,15.260,,0,"vern diff: source=69a489887e8440d89bccf73a5f8306c5
+vern diff: model=qwen3:4b-instruct
+vern diff: candidate=f33fbc1249274d08a1c95d63621f2c65
+
+{""alignment"":{""all_matched"":true,""length"":14},""applied_ignores"":[],""candidate_run_id"":""f33fbc1249274d08a1c95d63621f2c65"",""diverging_region"":[],""schema_version"":""vernier-report-v1"",""source_run_id"":""69a489887e8440d89bccf73a5f8306c5"",""verdict"":{""applied_ignores"":[],""fired"":[],""harness_fault"":null,""rule_ids"":[],""severity"":""NONE"",""spec_version"":""divergence-v1""}}
+"
+13c279c0857444dba2220b1cb5edb1f9,booking_05,http://localhost:11434/v1,qwen3:4b-instruct,qwen3:4b-instruct,qwen3:4b-instruct,0,42,16384,false,completed,4,4,NONE,,15.700,,0,"vern diff: source=13c279c0857444dba2220b1cb5edb1f9
+vern diff: model=qwen3:4b-instruct
+vern diff: candidate=d5089cf1fb634c81827c444594e83ae5
+
+{""alignment"":{""all_matched"":true,""length"":14},""applied_ignores"":[],""candidate_run_id"":""d5089cf1fb634c81827c444594e83ae5"",""diverging_region"":[],""schema_version"":""vernier-report-v1"",""source_run_id"":""13c279c0857444dba2220b1cb5edb1f9"",""verdict"":{""applied_ignores"":[],""fired"":[],""harness_fault"":null,""rule_ids"":[],""severity"":""NONE"",""spec_version"":""divergence-v1""}}
+"
+852054acb81a4803989d5976c92f0d96,router_01,http://localhost:11434/v1,qwen3:4b-instruct,qwen3:4b-instruct,qwen3:4b-instruct,0,42,16384,false,completed,5,5,NONE,,22.835,,0,"vern diff: source=852054acb81a4803989d5976c92f0d96
+vern diff: model=qwen3:4b-instruct
+vern diff: candidate=0055ad4caf60430daef685d1666eb890
+
+{""alignment"":{""all_matched"":true,""length"":15},""applied_ignores"":[],""candidate_run_id"":""0055ad4caf60430daef685d1666eb890"",""diverging_region"":[],""schema_version"":""vernier-report-v1"",""source_run_id"":""852054acb81a4803989d5976c92f0d96"",""verdict"":{""applied_ignores"":[],""fired"":[],""harness_fault"":null,""rule_ids"":[],""severity"":""NONE"",""spec_version"":""divergence-v1""}}
+"
+8c30beb612664ded894f7865bcadb68a,router_02,http://localhost:11434/v1,qwen3:4b-instruct,qwen3:4b-instruct,qwen3:4b-instruct,0,42,16384,false,completed,5,5,NONE,,30.202,,0,"vern diff: source=8c30beb612664ded894f7865bcadb68a
+vern diff: model=qwen3:4b-instruct
+vern diff: candidate=d7a2a34508fe4a598f9fbb0548edc851
+
+{""alignment"":{""all_matched"":true,""length"":17},""applied_ignores"":[],""candidate_run_id"":""d7a2a34508fe4a598f9fbb0548edc851"",""diverging_region"":[],""schema_version"":""vernier-report-v1"",""source_run_id"":""8c30beb612664ded894f7865bcadb68a"",""verdict"":{""applied_ignores"":[],""fired"":[],""harness_fault"":null,""rule_ids"":[],""severity"":""NONE"",""spec_version"":""divergence-v1""}}
+"
+df7c021d8a264b63b7b59d978f2c5898,router_03,http://localhost:11434/v1,qwen3:4b-instruct,qwen3:4b-instruct,qwen3:4b-instruct,0,42,16384,false,completed,5,5,NONE,,31.514,,0,"vern diff: source=df7c021d8a264b63b7b59d978f2c5898
+vern diff: model=qwen3:4b-instruct
+vern diff: candidate=4f800109f8d54351b05f5e13a423a743
+
+{""alignment"":{""all_matched"":true,""length"":17},""applied_ignores"":[],""candidate_run_id"":""4f800109f8d54351b05f5e13a423a743"",""diverging_region"":[],""schema_version"":""vernier-report-v1"",""source_run_id"":""df7c021d8a264b63b7b59d978f2c5898"",""verdict"":{""applied_ignores"":[],""fired"":[],""harness_fault"":null,""rule_ids"":[],""severity"":""NONE"",""spec_version"":""divergence-v1""}}
+"
+70e89d4d79b44d9bb36c100cc85a332d,router_04,http://localhost:11434/v1,qwen3:4b-instruct,qwen3:4b-instruct,qwen3:4b-instruct,0,42,16384,false,completed,5,5,NONE,,22.981,,0,"vern diff: source=70e89d4d79b44d9bb36c100cc85a332d
+vern diff: model=qwen3:4b-instruct
+vern diff: candidate=4fda2b708b394b77ac7e836221154c44
+
+{""alignment"":{""all_matched"":true,""length"":15},""applied_ignores"":[],""candidate_run_id"":""4fda2b708b394b77ac7e836221154c44"",""diverging_region"":[],""schema_version"":""vernier-report-v1"",""source_run_id"":""70e89d4d79b44d9bb36c100cc85a332d"",""verdict"":{""applied_ignores"":[],""fired"":[],""harness_fault"":null,""rule_ids"":[],""severity"":""NONE"",""spec_version"":""divergence-v1""}}
+"
+199adaa716544a358aa52112167c045c,router_05,http://localhost:11434/v1,qwen3:4b-instruct,qwen3:4b-instruct,qwen3:4b-instruct,0,42,16384,false,completed,5,5,NONE,,20.014,,0,"vern diff: source=199adaa716544a358aa52112167c045c
+vern diff: model=qwen3:4b-instruct
+vern diff: candidate=c6439fee32484f19b4aaac63272ae488
+
+{""alignment"":{""all_matched"":true,""length"":17},""applied_ignores"":[],""candidate_run_id"":""c6439fee32484f19b4aaac63272ae488"",""diverging_region"":[],""schema_version"":""vernier-report-v1"",""source_run_id"":""199adaa716544a358aa52112167c045c"",""verdict"":{""applied_ignores"":[],""fired"":[],""harness_fault"":null,""rule_ids"":[],""severity"":""NONE"",""spec_version"":""divergence-v1""}}
+"

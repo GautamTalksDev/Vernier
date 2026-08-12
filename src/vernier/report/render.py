@@ -57,6 +57,11 @@ def render_human(
     lines.append(f"  severity  {sev_color}{sev}{c['reset']}")
     rules = ", ".join(verdict.rule_ids) if verdict.rule_ids else "(none)"
     lines.append(f"  rules     {rules}")
+    if verdict.harness_fault:
+        lines.append(
+            f"  {c['red']}HARNESS_FAULT{c['reset']}  "
+            f"{escape_untrusted(verdict.harness_fault)}"
+        )
 
     if verdict.applied_ignores:
         lines.append("  ignores")

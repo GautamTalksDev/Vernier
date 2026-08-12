@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Support agent: lookup -> decide -> act (>=8 steps, >=4 tools)."""
+"""Support agent: model-driven tool loop (>=4 tools, >=8 projected steps)."""
 
 from __future__ import annotations
 
@@ -12,13 +12,18 @@ import httpx
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "examples"))
 
-from _corpus_llm import BASELINE_MODEL, chat, start_baseline_server  # noqa: E402
-
+from _corpus_llm import (  # noqa: E402
+    BASELINE_MODEL,
+    http_timeout,
+    run_tool_agent,
+    start_baseline_server,
+)
 from vern import tool  # noqa: E402
 
 
 @tool
 def lookup_customer(customer_id: str) -> dict[str, str]:
+    """Look up a customer record by id."""
     return {
         "id": customer_id,
         "tier": "gold" if customer_id.endswith("1") else "silver",
@@ -27,36 +32,51 @@ def lookup_customer(customer_id: str) -> dict[str, str]:
 
 @tool
 def lookup_ticket(ticket_id: str) -> dict[str, str]:
+    """Look up a support ticket by id."""
     return {"id": ticket_id, "issue": "billing", "priority": "high"}
 
 
 @tool
 def decide_action(tier: str, issue: str) -> dict[str, str]:
+    """Decide a support action from tier and issue."""
     action = "refund" if tier == "gold" and issue == "billing" else "escalate"
     return {"action": action}
 
 
 @tool
 def apply_action(customer_id: str, action: str) -> dict[str, str]:
+    """Apply a support action for a customer."""
     return {"customer_id": customer_id, "action": action, "status": "applied"}
 
 
-def run(case: str) -> int:
-    # case format: customer:ticket e.g. cust1:t9
-    customer_id, ticket_id = (case.split(":", 1) + ["t0"])[:2]
+TOOLS = {
+    "lookup_customer": lookup_customer,
+    "lookup_ticket": lookup_ticket,
+    "decide_action": decide_action,
+    "apply_action": apply_action,
+}
+
+SYSTEM = (
+    "You are a support agent. Look up the customer and ticket, decide an action, "
+    "and apply it. Use the tools until the case is resolved."
+)
+
+
+def run(case: str, *, model: str = BASELINE_MODEL) -> int:
     server, base = start_baseline_server()
     try:
-        with httpx.Client(timeout=10.0) as client:
-            chat(client, base, f"support case {case}")
-            cust = lookup_customer(customer_id)
-            ticket = lookup_ticket(ticket_id)
-            chat(client, base, f"decide for {customer_id}")
-            decision = decide_action(str(cust["tier"]), str(ticket["issue"]))
-            chat(client, base, f"action={decision['action']}")
-            apply_action(customer_id, str(decision["action"]))
-            lookup_ticket(ticket_id)
-            chat(client, base, f"confirm support {case}")
-            apply_action(customer_id, "notify")
+        with httpx.Client(timeout=http_timeout()) as client:
+            run_tool_agent(
+                client,
+                base,
+                model=model,
+                system=SYSTEM,
+                user=(
+                    f"Handle support case {case!r} (format customer:ticket). "
+                    "Look up both sides, decide an action, and apply it."
+                ),
+                tools=TOOLS,
+            )
         return 0
     finally:
         if server is not None:
@@ -68,8 +88,7 @@ def main() -> int:
     parser.add_argument("--input", default="cust1:t9")
     parser.add_argument("--model", default=BASELINE_MODEL)
     args = parser.parse_args()
-    del args.model
-    return run(args.input)
+    return run(args.input, model=args.model)
 
 
 if __name__ == "__main__":

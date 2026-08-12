@@ -1,0 +1,1 @@
+{"channel":"function","error":"tool_math() missing 1 required positional argument: 'expr'","error_type":"TypeError","name":"tool_math"}

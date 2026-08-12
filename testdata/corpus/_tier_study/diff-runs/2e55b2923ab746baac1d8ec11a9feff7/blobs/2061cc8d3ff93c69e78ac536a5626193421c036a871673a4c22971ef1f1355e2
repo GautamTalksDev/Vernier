@@ -1,0 +1,1 @@
+{"command":["/home/gautamtalksdev/projects/Vernier/.venv/bin/python3","/home/gautamtalksdev/projects/Vernier/examples/router_agent.py","--input","weather Tokyo","--model","qwen3:4b-instruct"],"cwd":"/home/gautamtalksdev/projects/Vernier","mode":"live_diff","replay_of":"70e89d4d79b44d9bb36c100cc85a332d","run_id":"2e55b2923ab746baac1d8ec11a9feff7"}

@@ -50,6 +50,19 @@ Thumbs.db
 # KT-1 corpus raw records (large). Rebuild: scripts/build_corpus.py
 testdata/corpus/runs/
 testdata/corpus/_tmp_record/
+testdata/corpus/_tmp_control_record/
 testdata/corpus/_verify_staging/
 testdata/corpus/_kt1_staging/
+testdata/corpus/_burnin_staging/
+testdata/corpus/_burnin_control/
 testdata/corpus/kt1_results.csv
+
+# Invalidated CP-9 corpus (scripted agents) — keep on disk, not in git
+testdata/corpus-v0-invalid/runs/
+testdata/corpus-v0-invalid/_*/
+testdata/corpus-v0-invalid/kt1_results.csv
+
+# KT-2 labelling scratch (queue/labels/sealed stay tracked)
+testdata/labels/_staging/
+testdata/labels/session.json
+testdata/labels/blind/

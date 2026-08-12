@@ -1,0 +1,66 @@
+{
+  "schema_version": "kt1-config-v1",
+  "cost_abort_usd": 100.0,
+  "temperature": 0.0,
+  "stream": false,
+  "seeds": [
+    "42",
+    "43",
+    "44"
+  ],
+  "baseline_corpus_model": "qwen3:4b-instruct",
+  "notes": "Fill provider base URLs, API keys via env, and snapshot model IDs. Do not use floating aliases if a dated snapshot is available.",
+  "providers": {
+    "vendor_a": {
+      "base_url": "https://REPLACE_ME.example/v1",
+      "api_key_env": "VENDOR_A_API_KEY"
+    },
+    "vendor_b": {
+      "base_url": "https://REPLACE_ME.example/v1",
+      "api_key_env": "VENDOR_B_API_KEY"
+    }
+  },
+  "pricing_usd_per_1m_tokens": {
+    "REPLACE_ME": {
+      "input": 0.0,
+      "output": 0.0
+    }
+  },
+  "pairs": [
+    {
+      "pair_id": "N0",
+      "label": "hosted null (model vs itself)",
+      "baseline_model": "REPLACE_ME",
+      "candidate_model": "REPLACE_ME",
+      "provider": "vendor_a",
+      "kind": "null"
+    },
+    {
+      "pair_id": "P1",
+      "label": "within-vendor generational (predecessor -> successor)",
+      "baseline_model": "REPLACE_ME",
+      "candidate_model": "REPLACE_ME",
+      "provider": "vendor_a",
+      "kind": "generational"
+    },
+    {
+      "pair_id": "P2",
+      "label": "within-vendor tier (flagship -> cheap)",
+      "baseline_model": "REPLACE_ME",
+      "candidate_model": "REPLACE_ME",
+      "provider": "vendor_a",
+      "kind": "tier"
+    },
+    {
+      "pair_id": "P3",
+      "label": "cross-vendor",
+      "baseline_model": "REPLACE_ME",
+      "candidate_model": "REPLACE_ME",
+      "provider": "vendor_b",
+      "kind": "cross_vendor",
+      "candidate_provider": "vendor_b",
+      "baseline_provider": "vendor_a"
+    }
+  ],
+  "snapshot_labels": {}
+}

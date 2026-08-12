@@ -1,0 +1,1 @@
+{"id":"chatcmpl-788","object":"chat.completion","created":1786488891,"model":"llama3.1:8b","system_fingerprint":"fp_ollama","choices":[{"index":0,"message":{"role":"assistant","content":"I have booked the flight ATL-DFW:eve for eve. The booking status is confirmed."},"finish_reason":"stop"}],"usage":{"prompt_tokens":483,"completion_tokens":21,"total_tokens":504}}

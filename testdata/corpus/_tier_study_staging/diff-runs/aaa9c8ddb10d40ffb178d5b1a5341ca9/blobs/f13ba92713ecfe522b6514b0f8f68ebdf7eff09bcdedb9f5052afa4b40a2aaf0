@@ -1,0 +1,1 @@
+{"command":["/home/gautamtalksdev/projects/Vernier/.venv/bin/python3","/home/gautamtalksdev/projects/Vernier/examples/research_agent.py","--input","antibiotics","--model","qwen3:4b-instruct"],"cwd":"/home/gautamtalksdev/projects/Vernier","mode":"live_diff","replay_of":"632ab1e9abab4ebbb8fa11b7d92e1e4a","run_id":"aaa9c8ddb10d40ffb178d5b1a5341ca9"}

@@ -1,0 +1,1 @@
+{"detail":{"method":"POST","seq":1,"url":"http://localhost:11434/v1/chat/completions"},"reason":"transport_error"}
