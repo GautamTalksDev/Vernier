@@ -54,13 +54,13 @@ id_ed25519
 # Vernier local store
 .vernier/
 
-# Local run / study scratch (do not publish)
-*.log
-*.bak
+# Local burn-in / corpus rebuild scratch (published study evidence stays tracked)
 /_burnin_*/
-/_null_floor*
-null_floor_replay50.json
-null_floor_replay50_run.log
+/_burnin_control_agents/
+burnin_run.log
+burnin_control_run.log
+corpus_build.log
+corpus_verify.log
 
 # KT-1 corpus raw records (large). Rebuild: scripts/build_corpus.py
 testdata/corpus/runs/

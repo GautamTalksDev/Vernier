@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import json
 import os
+import re
 import shutil
 import subprocess
 from pathlib import Path
@@ -332,16 +333,22 @@ def test_vern_gate_corpus(tmp_path: Path) -> None:
 
 
 def test_help_prints_network_guarantee() -> None:
+    # Wide COLUMNS so Rich does not soft-wrap mid-phrase; strip ANSI for
+    # the same reason (markup can split a token across escape codes).
+    env = {**os.environ, "COLUMNS": "200", "TERM": "dumb"}
     proc = subprocess.run(
         ["uv", "run", "vern", "--help"],
         cwd=str(REPO),
         capture_output=True,
         text=True,
         check=False,
+        env=env,
     )
     assert proc.returncode == 0
-    assert "ZERO network requests" in proc.stdout
-    assert "No telemetry" in proc.stdout
-    assert "no version check" in proc.stdout
-    assert "no analytics" in proc.stdout
-    assert "no phone-home" in proc.stdout
+    out = re.sub(r"\x1b\[[0-9;]*m", "", proc.stdout)
+    out = re.sub(r"\s+", " ", out)
+    assert "ZERO network requests" in out
+    assert "No telemetry" in out
+    assert "no version check" in out
+    assert "no analytics" in out
+    assert "no phone-home" in out
