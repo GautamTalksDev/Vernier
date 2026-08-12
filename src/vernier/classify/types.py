@@ -92,6 +92,7 @@ HARNESS_FAULT_REQUEST_BODY_MISMATCH = (
     "harness defect, not a divergence-v1 behavioural finding."
 )
 
+
 @dataclass
 class IgnoreConfig:
     version: str = "divergence-v1"

@@ -32,6 +32,10 @@ from vernier.replay.project import project_run
 ROOT = Path(__file__).resolve().parents[1]
 OUT = ROOT / "testdata" / "corpus"
 RUNS = OUT / "runs"
+# Pinned contract for testdata/corpus/MANIFEST.json. tests/test_corpus.py
+# asserts the manifest matches this. Update here when intentionally rebuilding
+# the evaluation corpus against a new baseline model.
+EVAL_CORPUS_BASELINE_MODEL = "qwen3:4b-instruct"
 BASELINE_MODEL = os.environ.get("VERNIER_CORPUS_MODEL", "vernier-baseline-local-v1")
 
 AGENTS: dict[str, dict[str, object]] = {
@@ -179,8 +183,7 @@ def main() -> int:
                 )
             else:
                 raise RuntimeError(
-                    f"{label} failed >=8 steps and >=4 tools after retries "
-                    f"({last_err})"
+                    f"{label} failed >=8 steps and >=4 tools after retries ({last_err})"
                 )
 
             assert ok_dest is not None and ok_traj is not None

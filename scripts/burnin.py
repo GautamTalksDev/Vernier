@@ -163,11 +163,15 @@ def _run_one(
         timed_out = False
     except subprocess.TimeoutExpired as exc:
         timed_out = True
-        stdout = (exc.stdout or "") if isinstance(exc.stdout, str) else (
-            exc.stdout.decode("utf-8", errors="replace") if exc.stdout else ""
+        stdout = (
+            (exc.stdout or "")
+            if isinstance(exc.stdout, str)
+            else (exc.stdout.decode("utf-8", errors="replace") if exc.stdout else "")
         )
-        stderr = (exc.stderr or "") if isinstance(exc.stderr, str) else (
-            exc.stderr.decode("utf-8", errors="replace") if exc.stderr else ""
+        stderr = (
+            (exc.stderr or "")
+            if isinstance(exc.stderr, str)
+            else (exc.stderr.decode("utf-8", errors="replace") if exc.stderr else "")
         )
         proc_rc = -1
         combined = stderr + "\n" + stdout + f"\nTIMEOUT after {PER_RUN_TIMEOUT_S}s"
@@ -269,9 +273,7 @@ def _write_summary(path: Path, rows: list[dict[str, str]]) -> None:
             continue
         for rid in raw.split("|"):
             rid = rid.strip()
-            if rid in rule_hist:
-                rule_hist[rid] += 1
-            elif rid:
+            if rid in rule_hist or rid:
                 rule_hist[rid] += 1
 
     lines = [
@@ -309,7 +311,9 @@ def main(argv: list[str] | None = None) -> int:
     args = parser.parse_args(argv)
 
     if not MANIFEST.is_file():
-        print("missing MANIFEST.json — run scripts/build_corpus.py first", file=sys.stderr)
+        print(
+            "missing MANIFEST.json — run scripts/build_corpus.py first", file=sys.stderr
+        )
         return 2
 
     data = json.loads(MANIFEST.read_text(encoding="utf-8"))

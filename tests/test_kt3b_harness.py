@@ -16,9 +16,9 @@ from vernier.canonical._jcs import serialize_jcs
 from vernier.classify import classify_pair
 from vernier.classify.types import (
     HARNESS_FAULT_ZERO_TOOL_COLLAPSE,
+    Severity,
     TrajectoryEvent,
     Verdict,
-    Severity,
 )
 from vernier.replay.harness_guard import apply_harness_guard
 from vernier.replay.redrive import RedriveResult, redrive
@@ -132,11 +132,15 @@ def test_harness_fault_on_crash_zero_tools_suppresses_d05() -> None:
         TrajectoryEvent(kind="LlmTurn"),
         TrajectoryEvent(kind="ToolCall", tool_name="web_search", arguments={"q": "x"}),
         TrajectoryEvent(kind="ToolResult"),
-        TrajectoryEvent(kind="Terminal", terminal_kind="FinalMessage", final_message="ok"),
+        TrajectoryEvent(
+            kind="Terminal", terminal_kind="FinalMessage", final_message="ok"
+        ),
     ]
     collapsed = [
         TrajectoryEvent(kind="LlmTurn"),
-        TrajectoryEvent(kind="Terminal", terminal_kind="FinalMessage", final_message="err"),
+        TrajectoryEvent(
+            kind="Terminal", terminal_kind="FinalMessage", final_message="err"
+        ),
     ]
     # Without guard, D05 would fire.
     classified = classify_pair(baseline, collapsed)

@@ -78,7 +78,14 @@ def _json_type(annotation: Any) -> dict[str, Any]:
     # typing.Dict / List aliases already handled via get_origin
     name = getattr(annotation, "__name__", "")
     if name in {"str", "int", "float", "bool"}:
-        return {"type": {"str": "string", "int": "integer", "float": "number", "bool": "boolean"}[name]}
+        return {
+            "type": {
+                "str": "string",
+                "int": "integer",
+                "float": "number",
+                "bool": "boolean",
+            }[name]
+        }
     return {"type": "string"}
 
 
@@ -146,9 +153,7 @@ def _sampling_fields() -> dict[str, Any]:
 def _auth_headers() -> dict[str, str]:
     headers: dict[str, str] = {}
     api_key = (
-        os.environ.get("VERNIER_LLM_API_KEY")
-        or os.environ.get("OPENAI_API_KEY")
-        or ""
+        os.environ.get("VERNIER_LLM_API_KEY") or os.environ.get("OPENAI_API_KEY") or ""
     ).strip()
     if api_key:
         headers["Authorization"] = f"Bearer {api_key}"
@@ -378,9 +383,7 @@ def _stub_args_for(
                 args[key] = "billing"
             elif key in {"action"}:
                 args[key] = "refund"
-            elif key in {"city"}:
-                args[key] = seed
-            elif key in {"expr"}:
+            elif key in {"city"} or key in {"expr"}:
                 args[key] = seed
             elif key in {"op"}:
                 args[key] = "double"
@@ -424,7 +427,11 @@ def _stub_completion(req: dict[str, Any]) -> dict[str, Any]:
         # Text-only fallback (legacy callers).
         last = ""
         if messages:
-            last = str(messages[-1].get("content", "")) if isinstance(messages[-1], dict) else ""
+            last = (
+                str(messages[-1].get("content", ""))
+                if isinstance(messages[-1], dict)
+                else ""
+            )
         return {
             "id": "corpus-chat",
             "model": model,
@@ -460,7 +467,9 @@ def _stub_completion(req: dict[str, Any]) -> dict[str, Any]:
                                 "type": "function",
                                 "function": {
                                     "name": name,
-                                    "arguments": json.dumps(args, separators=(",", ":")),
+                                    "arguments": json.dumps(
+                                        args, separators=(",", ":")
+                                    ),
                                 },
                             }
                         ],

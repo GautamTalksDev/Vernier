@@ -236,7 +236,6 @@ def _run_one(
         )
         timed_out = False
         stdout = proc.stdout or ""
-        stderr = proc.stderr or ""
         proc_rc = proc.returncode
     except subprocess.TimeoutExpired as exc:
         timed_out = True
@@ -245,7 +244,7 @@ def _run_one(
             if isinstance(exc.stdout, str)
             else (exc.stdout.decode("utf-8", errors="replace") if exc.stdout else "")
         )
-        stderr = (
+        (
             (exc.stderr or "")
             if isinstance(exc.stderr, str)
             else (exc.stderr.decode("utf-8", errors="replace") if exc.stderr else "")
@@ -352,7 +351,7 @@ def _emit_md(path: Path, rows: list[dict[str, str]]) -> None:
         f"- Endpoint: `{ENDPOINT}`",
         f"- temperature=`{TEMPERATURE}`, stream=`{STREAM}`, "
         f"request_options=`{REQUEST_OPTIONS}` (no num_ctx on either leg)",
-        f"- Corpus: 30 runs under `testdata/corpus/`",
+        "- Corpus: 30 runs under `testdata/corpus/`",
         f"- T1 null seeds: {', '.join(T1_SEEDS)}",
         f"- T2/T3 seed: `{DEFAULT_SEED}`",
         "",
@@ -408,8 +407,7 @@ def _emit_md(path: Path, rows: list[dict[str, str]]) -> None:
     lines.extend(
         [
             "",
-            f"T1 null rate (denominator for NET): **{t1_div}/{t1_n} = "
-            f"{t1_rate:.4f}**"
+            f"T1 null rate (denominator for NET): **{t1_div}/{t1_n} = {t1_rate:.4f}**"
             if t1_n
             else "T1 null rate: n/a",
             "",

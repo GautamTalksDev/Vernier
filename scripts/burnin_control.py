@@ -9,14 +9,14 @@ from __future__ import annotations
 import argparse
 import json
 import os
-import re
 import shutil
 import subprocess
 import sys
 import time
+from collections.abc import Callable
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any, Callable
+from typing import Any
 
 from vernier.canonical._jcs import serialize_jcs
 from vernier.replay.harness_guard import tool_call_count
@@ -203,7 +203,10 @@ def _record_control_baselines() -> Path:
         "baseline_model": BASE_MODEL,
         "run_count": len(entries),
         "shapes": ["research"],
-        "note": "Temporary control baselines (Ollama). Full corpus rebuilt after C1–C4 pass.",
+        "note": (
+            "Temporary control baselines (Ollama). "
+            "Full corpus rebuilt after C1–C4 pass."
+        ),
         "runs": entries,
     }
     MANIFEST.parent.mkdir(parents=True, exist_ok=True)
@@ -356,9 +359,7 @@ def _judge_c1(results: list[RunResult]) -> bool:
     return any(r.severity not in {"", "NONE"} for r in results)
 
 
-def _judge_rules(
-    results: list[RunResult], wanted: set[str]
-) -> bool:
+def _judge_rules(results: list[RunResult], wanted: set[str]) -> bool:
     observed: set[str] = set()
     for r in results:
         observed.update(r.rule_ids)
@@ -457,13 +458,13 @@ def _write_report(
                 "",
                 f"- **setup:** {spec.title}",
                 f"- **expected:** {spec.expected}",
-                f"- **expected rule IDs:** "
+                "- **expected rule IDs:** "
                 + (
                     ", ".join(spec.expected_rules)
                     if spec.expected_rules
                     else "(any non-NONE severity)"
                 ),
-                f"- **observed rule IDs:** "
+                "- **observed rule IDs:** "
                 + (", ".join(observed_rules) if observed_rules else "(none)"),
                 f"- **observed severities:** {', '.join(sevs)}",
                 f"- **verdict:** {'PASS' if passed else 'FAIL'}",
@@ -596,11 +597,7 @@ def main(argv: list[str] | None = None) -> int:
         if not passed:
             # Prefer a completed NONE run for the transport dump; else first row.
             pick = next(
-                (
-                    r
-                    for r in rows
-                    if r.severity == "NONE" and r.status == "completed"
-                ),
+                (r for r in rows if r.severity == "NONE" and r.status == "completed"),
                 rows[0],
             )
             failing_logs.append((spec, pick))

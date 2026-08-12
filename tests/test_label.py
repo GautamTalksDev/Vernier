@@ -99,7 +99,9 @@ def test_commit_refuses_without_pending(label_mod):
     assert label_mod.cmd_commit("COSMETIC") == 2
 
 
-def test_commit_appends_before_reveal_and_blocks_relabel(label_mod, monkeypatch, capsys):
+def test_commit_appends_before_reveal_and_blocks_relabel(
+    label_mod, monkeypatch, capsys
+):
     case_id = "abc123"
     label_mod.SEALED_DIR.mkdir(parents=True)
     label_mod.BLIND_DIR.mkdir(parents=True)

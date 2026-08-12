@@ -12,7 +12,12 @@ import httpx
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "examples"))
 
-from _corpus_llm import BASELINE_MODEL, chat, http_timeout, start_baseline_server  # noqa: E402
+from _corpus_llm import (  # noqa: E402
+    BASELINE_MODEL,
+    chat,
+    http_timeout,
+    start_baseline_server,
+)
 
 from vern import tool  # noqa: E402
 

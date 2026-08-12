@@ -56,9 +56,7 @@ def check_live_diff_request_parity(
 
     for field in ("temperature", "stream", "tool_choice"):
         if cand.get(field) != base.get(field):
-            mismatches.append(
-                f"/{field}: {base.get(field)!r} -> {cand.get(field)!r}"
-            )
+            mismatches.append(f"/{field}: {base.get(field)!r} -> {cand.get(field)!r}")
 
     if cand.get("options") != base.get("options"):
         mismatches.append(
@@ -68,17 +66,15 @@ def check_live_diff_request_parity(
     if cand.get("tools") != base.get("tools"):
         mismatches.append("/tools: schema differs from baseline")
 
-    if cand.get("model") != base.get("model"):
-        if not override_model or cand.get("model") != override_model:
-            mismatches.append(
-                f"/model: {base.get('model')!r} -> {cand.get('model')!r}"
-            )
+    if cand.get("model") != base.get("model") and (
+        not override_model or cand.get("model") != override_model
+    ):
+        mismatches.append(f"/model: {base.get('model')!r} -> {cand.get('model')!r}")
 
-    if cand.get("seed") != base.get("seed"):
-        if not override_seed or str(cand.get("seed")) != override_seed:
-            mismatches.append(
-                f"/seed: {base.get('seed')!r} -> {cand.get('seed')!r}"
-            )
+    if cand.get("seed") != base.get("seed") and (
+        not override_seed or str(cand.get("seed")) != override_seed
+    ):
+        mismatches.append(f"/seed: {base.get('seed')!r} -> {cand.get('seed')!r}")
 
     if turn_index == 0 and cand.get("messages") != base.get("messages"):
         mismatches.append("/messages: turn-0 history differs from baseline")

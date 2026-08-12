@@ -14,6 +14,7 @@ from vernier.capture.recorder import (
     record_http_request,
     record_http_response,
 )
+from vernier.classify.types import HARNESS_FAULT_REQUEST_BODY_MISMATCH
 from vernier.record.store import RecordStore
 from vernier.replay.catalog import http_request_key
 from vernier.replay.overrides import apply_live_overrides
@@ -22,7 +23,6 @@ from vernier.replay.request_parity import (
     check_live_diff_request_parity,
 )
 from vernier.replay.session import get_catalog, record_replay_miss, stub_http
-from vernier.classify.types import HARNESS_FAULT_REQUEST_BODY_MISMATCH
 
 
 def _headers_to_dict(headers: Any) -> dict[str, str]:

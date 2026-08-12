@@ -214,7 +214,9 @@ def _row_key(row: dict[str, str]) -> str:
 
 def _load_config(path: Path) -> dict[str, object]:
     if not path.is_file():
-        path.write_text(json.dumps(DEFAULT_CONFIG_DOC, indent=2) + "\n", encoding="utf-8")
+        path.write_text(
+            json.dumps(DEFAULT_CONFIG_DOC, indent=2) + "\n", encoding="utf-8"
+        )
         print(f"wrote placeholder config {path}", flush=True)
     return json.loads(path.read_text(encoding="utf-8"))
 
@@ -270,12 +272,15 @@ def _validate_config(cfg: dict[str, object], *, dry_run: bool) -> list[str]:
                 elif not dry_run and not (os.environ.get(key_env) or "").strip():
                     errors.append(f"provider {prov}: env {key_env} unset")
     null_pair = next((x for x in pairs if x.kind == "null"), None)
-    if null_pair is not None:
-        if null_pair.baseline_model != null_pair.candidate_model and PLACEHOLDER not in (
+    if null_pair is not None and (
+        null_pair.baseline_model != null_pair.candidate_model
+        and PLACEHOLDER
+        not in (
             null_pair.baseline_model,
             null_pair.candidate_model,
-        ):
-            errors.append("null pair must use the same snapshot id on both legs")
+        )
+    ):
+        errors.append("null pair must use the same snapshot id on both legs")
     return errors
 
 
@@ -363,7 +368,7 @@ def _provider_env(
     env.pop("VERNIER_LLM_NUM_CTX", None)
     env.pop("VERNIER_CONTROL_DROP_TOOL", None)
     env.setdefault("VERNIER_LLM_TIMEOUT_S", "600")
-    # Snapshot string is passed as --model; agent also sees VERNIER_OVERRIDE_MODEL via vern diff.
+    # Snapshot id is passed as --model (vern diff sets OVERRIDE_MODEL).
     _ = model
     return env
 
@@ -405,7 +410,9 @@ def _emit_md(path: Path, rows: list[dict[str, str]], cfg: dict[str, object]) -> 
         "| --- | --- | --- | ---: | ---: | ---: | --- | ---: | ---: |",
     ]
 
-    pair_order = [str(p["pair_id"]) for p in (cfg.get("pairs") or []) if isinstance(p, dict)]
+    pair_order = [
+        str(p["pair_id"]) for p in (cfg.get("pairs") or []) if isinstance(p, dict)
+    ]
     for pid in pair_order or sorted(by_pair):
         prow = by_pair.get(pid, [])
         if not prow:
@@ -458,8 +465,12 @@ def _emit_md(path: Path, rows: list[dict[str, str]], cfg: dict[str, object]) -> 
                 f"- baseline snapshot: `{prow[0].get('baseline_model_snapshot')}`",
                 f"- candidate snapshot: `{prow[0].get('candidate_model_snapshot')}`",
                 f"- comparisons: {len(prow)} (scored={n}, HARNESS_FAULT={len(faults)})",
-                f"- raw divergence: {k}/{n} = {rate:.4f}" if n else "- raw divergence: n/a",
-                f"- Wilson 95% CI: [{lo:.4f}, {hi:.4f}]" if n else "- Wilson 95% CI: n/a",
+                f"- raw divergence: {k}/{n} = {rate:.4f}"
+                if n
+                else "- raw divergence: n/a",
+                f"- Wilson 95% CI: [{lo:.4f}, {hi:.4f}]"
+                if n
+                else "- Wilson 95% CI: n/a",
                 (
                     f"- **NET vs N0:** {(rate - null_rate):+.4f}"
                     if pid != "N0" and n and null_n
@@ -681,7 +692,9 @@ def _run_one(
             row["severity"] = str(verdict.get("severity") or "")
             rules = verdict.get("rule_ids") or []
             row["rule_ids"] = (
-                "|".join(str(r) for r in rules) if isinstance(rules, list) else str(rules)
+                "|".join(str(r) for r in rules)
+                if isinstance(rules, list)
+                else str(rules)
             )
     elif proc_rc == 2 or "HARNESS_FAULT" in (stderr or ""):
         row["status"] = "HARNESS_FAULT"
@@ -738,7 +751,9 @@ def main(argv: list[str] | None = None) -> int:
             print("KT-1 config incomplete:", file=sys.stderr)
             for e in hard:
                 print(f"  - {e}", file=sys.stderr)
-            print("Fill kt1_config.json from provider docs, then re-run.", file=sys.stderr)
+            print(
+                "Fill kt1_config.json from provider docs, then re-run.", file=sys.stderr
+            )
             return 2
 
     if not MANIFEST.is_file():
@@ -780,7 +795,9 @@ def main(argv: list[str] | None = None) -> int:
             for entry in entries:
                 jobs.append((pair, entry, seed))
 
-    running_cost = sum(float(r.get("running_cost_usd") or 0) for r in rows[-1:]) if rows else 0.0
+    running_cost = (
+        sum(float(r.get("running_cost_usd") or 0) for r in rows[-1:]) if rows else 0.0
+    )
     if rows:
         try:
             running_cost = float(rows[-1].get("running_cost_usd") or 0.0)
@@ -836,7 +853,8 @@ def main(argv: list[str] | None = None) -> int:
         )
         if running_cost >= abort:
             print(
-                f"HARD ABORT after row: running cost ${running_cost:.2f} >= ${abort:.2f}",
+                f"HARD ABORT after row: "
+                f"running cost ${running_cost:.2f} >= ${abort:.2f}",
                 flush=True,
             )
             break

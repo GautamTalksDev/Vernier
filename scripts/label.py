@@ -33,10 +33,10 @@ from pathlib import Path
 from typing import Any
 
 from vernier.canonical._jcs import serialize_jcs
+from vernier.replay.redrive import redrive
 from vernier.report.escape import escape_untrusted
 from vernier.report.json_report import diverging_region
 from vernier.report.render import _fmt_event
-from vernier.replay.redrive import redrive
 
 ROOT = Path(__file__).resolve().parents[1]
 CORPUS = ROOT / "testdata" / "corpus"
@@ -98,9 +98,7 @@ def _assert_blind_text(text: str) -> None:
         # when appearing as `severity=` or bare severity words after a known prefix.
         if f"severity={token}" in lower or f"severity: {token}" in lower:
             raise RuntimeError(f"blind presentation would leak severity={token}")
-    if "d0" in lower and any(
-        f"d{i:02d}" in lower for i in range(1, 13)
-    ):
+    if "d0" in lower and any(f"d{i:02d}" in lower for i in range(1, 13)):
         # Rule ids like D05 in blind output are contamination.
         raise RuntimeError("blind presentation would leak rule id tokens")
 
@@ -130,9 +128,7 @@ def cmd_prepare(csv_path: Path) -> int:
                 "baseline_model": row.get("baseline_model", ""),
                 "candidate_model": candidate,
                 "severity": severity,
-                "rule_ids": [
-                    r for r in (row.get("rule_ids") or "").split("|") if r
-                ],
+                "rule_ids": [r for r in (row.get("rule_ids") or "").split("|") if r],
             }
             sealed_path = SEALED_DIR / f"{case_id}.json"
             sealed_path.write_bytes(serialize_jcs(sealed) + b"\n")
@@ -172,7 +168,7 @@ def _stage_source(run_id: str) -> Path:
 
 def _traj_outline(traj: list[Any]) -> list[str]:
     lines: list[str] = []
-    for i, ev in enumerate(traj):
+    for i, _ev in enumerate(traj):
         lines.append(f"  [{i}] {_fmt_event(traj, i)}")
     return lines
 
@@ -256,10 +252,7 @@ def cmd_next() -> int:
         print("all cases labelled")
         return 0
     case = remaining[0]
-    print(
-        f"progress: {len(done)}/{len(queue)} labelled; "
-        f"{len(remaining)} remaining"
-    )
+    print(f"progress: {len(done)}/{len(queue)} labelled; {len(remaining)} remaining")
     print(_present_case(case), end="")
     _save_state({"pending_case_id": case["case_id"], "revealed": False})
     return 0

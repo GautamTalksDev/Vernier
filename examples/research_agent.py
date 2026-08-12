@@ -18,6 +18,7 @@ from _corpus_llm import (  # noqa: E402
     run_tool_agent,
     start_baseline_server,
 )
+
 from vern import tool  # noqa: E402
 
 
@@ -69,8 +70,9 @@ def run(topic: str, *, model: str = BASELINE_MODEL) -> int:
                 model=model,
                 system=SYSTEM,
                 user=(
-                    f"Research the topic {topic!r}. Search for sources, fetch at least "
-                    f"one document, extract quotes, and write a summary titled {topic!r}."
+                    f"Research the topic {topic!r}. Search for sources, fetch at "
+                    f"least one document, extract quotes, and write a summary "
+                    f"titled {topic!r}."
                 ),
                 tools=TOOLS,
             )

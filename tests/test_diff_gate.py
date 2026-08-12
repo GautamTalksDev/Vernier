@@ -8,8 +8,6 @@ import shutil
 import subprocess
 from pathlib import Path
 
-import pytest
-
 from vernier.align.types import AlignedPair, Relation
 from vernier.canonical._jcs import serialize_jcs
 from vernier.classify.types import AppliedIgnore, FiredRule, Severity, Verdict
@@ -214,7 +212,11 @@ def test_vern_diff_on_fixture(tmp_path: Path) -> None:
     )
     # Live re-drive: exit 0/1 = classified; exit 2 = harness/ops fault.
     assert proc.returncode in {0, 1, 2}, proc.stderr + proc.stdout
-    assert "severity" in proc.stdout.lower() or "vern diff" in proc.stdout or "HARNESS" in proc.stderr
+    assert (
+        "severity" in proc.stdout.lower()
+        or "vern diff" in proc.stdout
+        or "HARNESS" in proc.stderr
+    )
 
 
 def test_vern_diff_json(tmp_path: Path) -> None:

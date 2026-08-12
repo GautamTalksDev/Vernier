@@ -59,8 +59,10 @@ def request_body_mismatch_fault(candidate_dir: Path) -> str | None:
             continue
         detail = str(payload.get("detail") or "")
         if "REQUEST_BODY_MISMATCH" in detail:
-            return detail if detail.startswith(HARNESS_FAULT_REQUEST_BODY_MISMATCH.split(":")[0]) else (
-                f"{HARNESS_FAULT_REQUEST_BODY_MISMATCH} {detail}"
+            return (
+                detail
+                if detail.startswith(HARNESS_FAULT_REQUEST_BODY_MISMATCH.split(":")[0])
+                else (f"{HARNESS_FAULT_REQUEST_BODY_MISMATCH} {detail}")
             )
     output_path = candidate_dir / "agent_output.txt"
     if output_path.is_file():

@@ -611,8 +611,7 @@ def init_cmd(
     for item in written:
         typer.echo(f"wrote {item}")
     typer.echo(
-        "Next: record baseline runs into "
-        f"{corpus_path}/ then push. See docs/CI.md."
+        f"Next: record baseline runs into {corpus_path}/ then push. See docs/CI.md."
     )
 
 

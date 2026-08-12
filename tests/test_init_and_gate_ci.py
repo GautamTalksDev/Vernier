@@ -154,7 +154,9 @@ def test_vern_gate_prompt_regression_is_harness_or_divergence(tmp_path: Path) ->
     runs.mkdir()
     run_id = _prepare_run(FIXTURES / "01_tools_basic", runs)
     prompt = tmp_path / "regress.txt"
-    prompt.write_text("REGRESS: force a behavioural trajectory change", encoding="utf-8")
+    prompt.write_text(
+        "REGRESS: force a behavioural trajectory change", encoding="utf-8"
+    )
     report_path = tmp_path / "gate-report.json"
     comment_path = tmp_path / "comment.md"
     proc = subprocess.run(

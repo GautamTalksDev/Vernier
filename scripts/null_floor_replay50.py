@@ -4,6 +4,7 @@
 from __future__ import annotations
 
 import argparse
+import contextlib
 import csv
 import hashlib
 import json
@@ -31,10 +32,8 @@ def _arg_fingerprint(resp: dict) -> tuple[str, list[dict[str, object]]]:
         fn = tc.get("function") or {}
         args = fn.get("arguments")
         if isinstance(args, str):
-            try:
+            with contextlib.suppress(json.JSONDecodeError):
                 args = json.loads(args)
-            except json.JSONDecodeError:
-                pass
         norm.append({"name": fn.get("name"), "arguments": args})
     blob = json.dumps(norm, sort_keys=True, separators=(",", ":")).encode()
     return hashlib.sha256(blob).hexdigest()[:16], norm
@@ -68,7 +67,7 @@ def _llm_responses(run_dir: Path) -> list[dict]:
 
 def _first_d04_turn(baseline_dir: Path, candidate_dir: Path) -> int | None:
     ra, rb = _llm_responses(baseline_dir), _llm_responses(candidate_dir)
-    for i, (a, b) in enumerate(zip(ra, rb)):
+    for i, (a, b) in enumerate(zip(ra, rb, strict=False)):
         _, na = _arg_fingerprint(a)
         _, nb = _arg_fingerprint(b)
         if na != nb:
@@ -94,7 +93,11 @@ def _replay(body: bytes) -> tuple[str, list[dict[str, object]]]:
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--csv", type=Path, default=TIER_CSV)
-    parser.add_argument("--staging", type=Path, default=ROOT / "testdata" / "corpus" / "_tier_study_staging")
+    parser.add_argument(
+        "--staging",
+        type=Path,
+        default=ROOT / "testdata" / "corpus" / "_tier_study_staging",
+    )
     parser.add_argument("--trials", type=int, default=N_TRIALS)
     args = parser.parse_args()
 
@@ -144,7 +147,7 @@ def main() -> int:
         print(f"{label} seed={seed} turn={turn} n_trials={args.trials} …", flush=True)
         counts: Counter[str] = Counter()
         examples: dict[str, list[dict[str, object]]] = {}
-        for i in range(args.trials):
+        for _i in range(args.trials):
             fp, norm = _replay(body)
             counts[fp] += 1
             examples.setdefault(fp, norm)

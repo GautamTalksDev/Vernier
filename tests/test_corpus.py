@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import importlib.util
 import json
 from pathlib import Path
 
@@ -9,6 +10,18 @@ REPO = Path(__file__).resolve().parents[1]
 CORPUS = REPO / "testdata" / "corpus"
 MANIFEST = CORPUS / "MANIFEST.json"
 IDEAS = REPO / "IDEAS.md"
+
+
+def _eval_corpus_baseline_model() -> str:
+    """Load EVAL_CORPUS_BASELINE_MODEL from scripts/build_corpus.py (single source)."""
+    path = REPO / "scripts" / "build_corpus.py"
+    spec = importlib.util.spec_from_file_location("vernier_build_corpus", path)
+    assert spec is not None and spec.loader is not None
+    mod = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(mod)
+    value = getattr(mod, "EVAL_CORPUS_BASELINE_MODEL", None)
+    assert isinstance(value, str) and value, "EVAL_CORPUS_BASELINE_MODEL missing"
+    return value
 
 
 def test_ideas_has_at_least_ten_entries() -> None:
@@ -47,4 +60,8 @@ def test_manifest_when_present_has_30_runs() -> None:
     assert data["run_count"] >= 30
     assert len(data["runs"]) >= 30
     assert len(data["shapes"]) >= 6
-    assert data["baseline_model"] == "vernier-baseline-local-v1"
+    expected = _eval_corpus_baseline_model()
+    assert data["baseline_model"] == expected, (
+        f"MANIFEST baseline_model={data['baseline_model']!r} != "
+        f"EVAL_CORPUS_BASELINE_MODEL={expected!r} in scripts/build_corpus.py"
+    )
