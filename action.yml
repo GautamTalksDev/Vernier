@@ -61,7 +61,7 @@ runs:
   using: composite
   steps:
     - name: Install uv
-      uses: astral-sh/setup-uv@v5
+      uses: astral-sh/setup-uv@v7
       with:
         python-version: "3.12"
         enable-cache: true
@@ -122,7 +122,7 @@ runs:
 
     - name: Upload gate report
       if: always()
-      uses: actions/upload-artifact@v4
+      uses: actions/upload-artifact@v7
       with:
         name: vernier-gate-report
         path: |
@@ -132,7 +132,7 @@ runs:
 
     - name: Post PR comment
       if: always() && github.event_name == 'pull_request'
-      uses: actions/github-script@v7
+      uses: actions/github-script@v9
       env:
         COMMENT_PATH: .vernier/ci/gate-comment.md
       with:
@@ -164,7 +164,7 @@ runs:
 
     - name: Set commit status
       if: always()
-      uses: actions/github-script@v7
+      uses: actions/github-script@v9
       env:
         WORST: ${{ steps.gate.outputs.worst-severity }}
         RULES: ${{ steps.gate.outputs.rule-ids }}
