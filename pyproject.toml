@@ -48,6 +48,7 @@ src = ["src", "tests"]
 select = ["E", "F", "I", "UP", "B", "SIM"]
 
 [tool.mypy]
+# python_version pins CI's lowest matrix entry so `uv run mypy src` matches CI on any host.
 python_version = "3.11"
 strict = true
 files = ["src"]

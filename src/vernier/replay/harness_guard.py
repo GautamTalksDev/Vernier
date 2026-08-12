@@ -25,12 +25,25 @@ _TRANSPORT_MARKERS = (
 
 
 class _RedriveLike(Protocol):
-    traj_a: list[TrajectoryEvent]
-    traj_b: list[TrajectoryEvent]
-    verdict: Verdict
-    agent_exit: int
-    agent_output: str
-    candidate_dir: Path
+    """Read-only view of a redrive result (RedriveResult is frozen evidence)."""
+
+    @property
+    def traj_a(self) -> list[TrajectoryEvent]: ...
+
+    @property
+    def traj_b(self) -> list[TrajectoryEvent]: ...
+
+    @property
+    def verdict(self) -> Verdict: ...
+
+    @property
+    def agent_exit(self) -> int: ...
+
+    @property
+    def agent_output(self) -> str: ...
+
+    @property
+    def candidate_dir(self) -> Path: ...
 
 
 def tool_call_count(traj: list[TrajectoryEvent]) -> int:
