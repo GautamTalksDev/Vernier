@@ -13,7 +13,9 @@ from __future__ import annotations
 
 import gzip
 import hashlib
+import io
 import json
+import re
 import threading
 import zlib
 from collections.abc import Iterator
@@ -29,6 +31,11 @@ from vernier.record.schema import RECORD_FORMAT_VERSION, Event, EventKind
 GZIP_THRESHOLD: Final = 4 * 1024
 CANON_VERSION: Final = "vernier-canon-v1"
 DEFAULT_RUNS_DIR: Final = Path(".vernier/runs")
+MAX_BLOB_DECOMPRESSED_BYTES: Final = 8 * 1024 * 1024
+MAX_EVENT_LINE_BYTES: Final = 1024 * 1024
+MAX_EVENTS: Final = 5000
+_SHA256_HEX_RE: Final = re.compile(r"^[0-9a-f]{64}$")
+_RUN_ID_RE: Final = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._-]{0,127}$")
 
 
 @dataclass(frozen=True, slots=True)
@@ -116,6 +123,68 @@ def blob_digest(data: bytes) -> str:
     return f"sha256:{hashlib.sha256(data).hexdigest()}"
 
 
+def validate_run_id(run_id: str) -> str:
+    """Reject run ids that could traverse out of the runs directory."""
+    if not run_id or not isinstance(run_id, str):
+        raise ValueError("run_id must be a non-empty string")
+    if (
+        ".." in run_id
+        or "/" in run_id
+        or "\\" in run_id
+        or "\x00" in run_id
+        or not _RUN_ID_RE.fullmatch(run_id)
+    ):
+        raise ValueError(f"invalid run_id (path escape or bad charset): {run_id!r}")
+    return run_id
+
+
+def validate_blob_digest_hex(digest_hex: str) -> str:
+    """Reject blob digest path components that are not a bare sha256 hex digests."""
+    if not isinstance(digest_hex, str) or not digest_hex:
+        raise ValueError("blob digest must be a non-empty string")
+    if (
+        "/" in digest_hex
+        or "\\" in digest_hex
+        or "\x00" in digest_hex
+        or ".." in digest_hex
+        or not _SHA256_HEX_RE.fullmatch(digest_hex)
+    ):
+        raise ValueError(f"invalid blob digest hex: {digest_hex!r}")
+    return digest_hex
+
+
+def _safe_gzip_decompress(raw: bytes) -> bytes:
+    """Decompress gzip with a hard expanded-size cap (gzip-bomb defense)."""
+    out = io.BytesIO()
+    total = 0
+    with gzip.GzipFile(fileobj=io.BytesIO(raw), mode="rb") as gz:
+        while True:
+            chunk = gz.read(64 * 1024)
+            if not chunk:
+                break
+            total += len(chunk)
+            if total > MAX_BLOB_DECOMPRESSED_BYTES:
+                raise ValueError(
+                    f"decompressed blob exceeds limit "
+                    f"({MAX_BLOB_DECOMPRESSED_BYTES} bytes); possible gzip bomb"
+                )
+            out.write(chunk)
+    return out.getvalue()
+
+
+def confine_path(path: Path, root: Path) -> Path:
+    """Resolve ``path`` and require it to stay under ``root``."""
+    resolved = Path(path).resolve()
+    root_res = Path(root).resolve()
+    try:
+        resolved.relative_to(root_res)
+    except ValueError as exc:
+        raise ValueError(
+            f"path {resolved} escapes confinement root {root_res}"
+        ) from exc
+    return resolved
+
+
 class RecordStore:
     """Append-only writer for one run directory.
 
@@ -134,7 +203,7 @@ class RecordStore:
         cwd: str | None = None,
     ) -> None:
         self.root = Path(root)
-        self.run_id = run_id
+        self.run_id = validate_run_id(run_id)
         self._lock = threading.Lock()
         self._seq = 0
         self._event_count = 0
@@ -322,7 +391,15 @@ class RecordStore:
         return ref
 
     def _append_body_unlocked(self, body: bytes) -> None:
+        if self._event_count >= MAX_EVENTS:
+            raise ValueError(
+                f"refusing to append event; max_events={MAX_EVENTS} already reached"
+            )
         line = encode_event_line(body)
+        if len(line) > MAX_EVENT_LINE_BYTES:
+            raise ValueError(
+                f"event line length {len(line)} exceeds limit {MAX_EVENT_LINE_BYTES}"
+            )
         with self.events_path.open("ab") as fh:
             fh.write(line)
         self._event_bodies.append(body)
@@ -337,13 +414,18 @@ class RecordStore:
 def _read_blob_file(blobs_dir: Path, ref: str) -> bytes:
     if not ref.startswith("sha256:"):
         raise ValueError(f"unsupported blob ref: {ref!r}")
-    digest_hex = ref.removeprefix("sha256:")
-    gz_path = blobs_dir / f"{digest_hex}.gz"
-    path = blobs_dir / digest_hex
+    digest_hex = validate_blob_digest_hex(ref.removeprefix("sha256:"))
+    blobs_dir = Path(blobs_dir).resolve()
+    gz_path = confine_path(blobs_dir / f"{digest_hex}.gz", blobs_dir)
+    path = confine_path(blobs_dir / digest_hex, blobs_dir)
     if gz_path.exists():
-        data = gzip.decompress(gz_path.read_bytes())
+        data = _safe_gzip_decompress(gz_path.read_bytes())
     elif path.exists():
         data = path.read_bytes()
+        if len(data) > MAX_BLOB_DECOMPRESSED_BYTES:
+            raise ValueError(
+                f"blob exceeds size limit ({MAX_BLOB_DECOMPRESSED_BYTES} bytes)"
+            )
     else:
         raise FileNotFoundError(f"missing blob {ref}")
     actual = hashlib.sha256(data).hexdigest()
@@ -357,10 +439,22 @@ def _read_blob_file(blobs_dir: Path, ref: str) -> bytes:
 def iter_event_dicts(events_path: Path) -> Iterator[dict[str, Any]]:
     if not events_path.exists():
         return
+    count = 0
     for line in events_path.read_bytes().splitlines(keepends=True):
         if not line.strip():
             continue
+        if len(line) > MAX_EVENT_LINE_BYTES:
+            raise ValueError(
+                f"events.jsonl line length {len(line)} exceeds "
+                f"limit {MAX_EVENT_LINE_BYTES}"
+            )
         body = decode_event_line(line if line.endswith(b"\n") else line + b"\n")
+        count += 1
+        if count > MAX_EVENTS:
+            raise ValueError(
+                f"events.jsonl has too many events (>{MAX_EVENTS}); "
+                "refusing to load"
+            )
         yield json.loads(body.decode("utf-8"))
 
 
@@ -371,11 +465,21 @@ def load_run(root: Path) -> FrozenRun:
     manifest_path = root / "manifest.json"
     bodies: list[bytes] = []
     events: list[Event] = []
-    for line in events_path.read_bytes().splitlines(keepends=True):
+    for index, line in enumerate(events_path.read_bytes().splitlines(keepends=True)):
         if not line.strip():
             continue
+        if len(line) > MAX_EVENT_LINE_BYTES:
+            raise ValueError(
+                f"events.jsonl line {index} length {len(line)} exceeds "
+                f"limit {MAX_EVENT_LINE_BYTES}"
+            )
         body = decode_event_line(line if line.endswith(b"\n") else line + b"\n")
         bodies.append(body)
+        if len(bodies) > MAX_EVENTS:
+            raise ValueError(
+                f"events.jsonl has too many events (>{MAX_EVENTS}); "
+                "refusing to load"
+            )
         data = json.loads(body.decode("utf-8"))
         events.append(
             Event(
@@ -488,13 +592,24 @@ def verify_run(root: Path) -> VerifyResult:
             if name.endswith(".gz"):
                 digest_hex = name[: -len(".gz")]
                 try:
-                    data = gzip.decompress(path.read_bytes())
+                    validate_blob_digest_hex(digest_hex)
+                    data = _safe_gzip_decompress(path.read_bytes())
                 except Exception as exc:  # noqa: BLE001
                     errors.append(f"blob {name}: gzip error: {exc}")
                     continue
             else:
+                try:
+                    validate_blob_digest_hex(name)
+                except ValueError as exc:
+                    errors.append(f"blob {name}: {exc}")
+                    continue
                 digest_hex = name
                 data = path.read_bytes()
+                if len(data) > MAX_BLOB_DECOMPRESSED_BYTES:
+                    errors.append(
+                        f"blob {name}: exceeds decompressed size limit"
+                    )
+                    continue
             actual = hashlib.sha256(data).hexdigest()
             if actual != digest_hex:
                 errors.append(

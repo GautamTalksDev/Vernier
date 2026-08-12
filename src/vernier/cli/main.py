@@ -1,9 +1,7 @@
-"""CLI entrypoint for the ``vern`` console script."""
+"""``vern`` console entrypoint: record, re-drive, and gate agent behaviour."""
 
 from __future__ import annotations
 
-import json
-import os
 import subprocess
 import uuid
 from pathlib import Path
@@ -21,9 +19,11 @@ from vernier.record.index import (
 from vernier.record.store import DEFAULT_RUNS_DIR, verify_run
 from vernier.replay.redrive import (
     all_matched,
+    capture_python_env,
     index_beside,
     redrive,
     resolve_command,
+    with_python_safe_path_flag,
     write_shim,
 )
 from vernier.report import (
@@ -34,17 +34,31 @@ from vernier.report import (
     render_human,
     report_to_jcs,
 )
+from vernier.report.escape import escape_untrusted
+
+
+def _format_harness_fault_for_display(fault: str | None) -> str:
+    """Render a harness fault line for the terminal.
+
+    ``None`` is an explicit marker (never passed into ``escape_untrusted``);
+    any string value is escaped as attacker-controlled text.
+    """
+    if fault is None:
+        return "<none>"
+    return escape_untrusted(fault)
+
 
 NETWORK_GUARANTEE = (
-    "Network guarantee: vern makes ZERO network requests other than to the "
-    "model provider you have already configured. No telemetry, no version "
-    "check, no analytics, no phone-home."
+    "Network: vern makes ZERO network requests other than to the model "
+    "provider you already configured. No telemetry, no version check, "
+    "no analytics, no phone-home."
 )
 
 app = typer.Typer(
     name="vern",
     help=(
-        "Vernier: deterministic capture, replay, and divergence classification.\n\n"
+        "Did your agent's behaviour change, and is it safe to ship?\n\n"
+        "Record a run, re-drive it, get a deterministic severity.\n\n"
         + NETWORK_GUARANTEE
     ),
     no_args_is_help=True,
@@ -53,11 +67,13 @@ app = typer.Typer(
 
 @app.callback()
 def main() -> None:
-    """Vernier: deterministic capture, replay, and divergence classification.
+    """Did your agent's behaviour change, and is it safe to ship?
 
-    Network guarantee: vern makes ZERO network requests other than to the
-    model provider you have already configured. No telemetry, no version
-    check, no analytics, no phone-home.
+    Record a run, re-drive it, get a deterministic severity.
+
+    Network: vern makes ZERO network requests other than to the model
+    provider you already configured. No telemetry, no version check,
+    no analytics, no phone-home.
     """
 
 
@@ -80,12 +96,12 @@ def record(
     ctx: typer.Context,
     out: Annotated[
         Path,
-        typer.Option("--out", "-o", help="Runs directory (contains <run_id>/)."),
+        typer.Option("--out", "-o", help="Directory that will hold <run_id>/ folders."),
     ] = DEFAULT_RUNS_DIR,
 ) -> None:
-    """Record LLM/HTTP traffic for a command without editing its source.
+    """Record what your agent does (LLM + HTTP + tools) without editing it.
 
-    Usage: ``vern record -- python examples/simple_agent.py``
+    Example: ``vern record -- python examples/simple_agent.py``
     """
     command = list(ctx.args)
     if command and command[0] == "--":
@@ -104,22 +120,18 @@ def record(
     index_path = index_beside(runs_dir)
     shim_dir = write_shim(run_dir)
 
-    resolved = _resolve_python(command)
+    resolved = with_python_safe_path_flag(_resolve_python(command))
     cwd = str(Path.cwd().resolve())
 
-    env = os.environ.copy()
-    existing = env.get("PYTHONPATH", "")
-    env["PYTHONPATH"] = (
-        str(shim_dir) if not existing else f"{shim_dir}{os.pathsep}{existing}"
+    env = capture_python_env(
+        shim_dir=shim_dir,
+        run_dir=run_dir,
+        run_id=run_id,
+        index_path=index_path,
+        command=resolved,
+        cwd=cwd,
     )
     env["VERNIER_CAPTURE"] = "1"
-    env["VERNIER_RUN_DIR"] = str(run_dir.resolve())
-    env["VERNIER_RUN_ID"] = run_id
-    env["VERNIER_INDEX"] = str(index_path.resolve())
-    env["VERNIER_COMMAND_JSON"] = json.dumps(resolved)
-    env["VERNIER_CWD"] = cwd
-    env.setdefault("PYTHONSAFEPATH", "")
-    env.pop("PYTHONNOUSERSITE", None)
 
     typer.echo(f"vern record: run_id={run_id}", err=True)
     typer.echo(f"vern record: out={run_dir}", err=True)
@@ -134,17 +146,17 @@ def record(
 
 @app.command("verify-record")
 def verify_record_cmd(
-    run_id: Annotated[str, typer.Argument(help="Run id to verify.")],
+    run_id: Annotated[str, typer.Argument(help="Run id to check.")],
     runs_dir: Annotated[
         Path,
-        typer.Option("--runs-dir", help="Directory containing run folders."),
+        typer.Option("--runs-dir", help="Directory that holds run folders."),
     ] = DEFAULT_RUNS_DIR,
     index: Annotated[
         Path,
         typer.Option("--index", help="SQLite run index path."),
     ] = DEFAULT_INDEX_PATH,
 ) -> None:
-    """Recompute every CRC and the root digest; report tampering."""
+    """Recompute every CRC and the root digest. Report tampering."""
     try:
         run_dir = resolve_run_dir(run_id, runs_dir=runs_dir, index_path=index)
     except FileNotFoundError as exc:
@@ -167,7 +179,7 @@ def verify(
     run_id: Annotated[str, typer.Argument(help="Run id to re-drive.")],
     runs_dir: Annotated[
         Path,
-        typer.Option("--runs-dir", help="Directory containing run folders."),
+        typer.Option("--runs-dir", help="Directory that holds run folders."),
     ] = DEFAULT_RUNS_DIR,
     index: Annotated[
         Path,
@@ -175,10 +187,12 @@ def verify(
     ] = DEFAULT_INDEX_PATH,
     out: Annotated[
         Path | None,
-        typer.Option("--out", help="Directory for the re-drive run."),
+        typer.Option("--out", help="Where to write the re-drive run."),
     ] = None,
 ) -> None:
-    """Full-stub re-drive: replay recorded stubs and assert identical trajectory.
+    """Full-stub re-drive: replay the record and demand an identical trajectory.
+
+    Use this to prove the substrate still reproduces a run.
 
     Exit codes: 0 identical, 1 divergence, 2 operational error.
     """
@@ -221,7 +235,10 @@ def verify(
     ):
         typer.echo("vern verify: ReplayMiss during re-drive", err=True)
         if result.agent_output.strip():
-            typer.echo(result.agent_output.strip()[-2000:], err=True)
+            typer.echo(
+                escape_untrusted(result.agent_output.strip()[-2000:]),
+                err=True,
+            )
         raise typer.Exit(code=1)
 
     if (
@@ -248,18 +265,18 @@ def diff(
     run_id: Annotated[str, typer.Argument(help="Baseline run id.")],
     model: Annotated[
         str | None,
-        typer.Option("--model", help="Override model on live LLM requests."),
+        typer.Option("--model", help="Candidate model id for live LLM requests."),
     ] = None,
     prompt_file: Annotated[
         Path | None,
         typer.Option(
             "--prompt-file",
-            help="Override system prompt from a UTF-8 file.",
+            help="Replace the system prompt from a UTF-8 file.",
         ),
     ] = None,
     runs_dir: Annotated[
         Path,
-        typer.Option("--runs-dir", help="Directory containing run folders."),
+        typer.Option("--runs-dir", help="Directory that holds run folders."),
     ] = DEFAULT_RUNS_DIR,
     index: Annotated[
         Path,
@@ -267,14 +284,16 @@ def diff(
     ] = DEFAULT_INDEX_PATH,
     out: Annotated[
         Path | None,
-        typer.Option("--out", help="Directory for the live re-drive run."),
+        typer.Option("--out", help="Where to write the live re-drive run."),
     ] = None,
     as_json: Annotated[
         bool,
-        typer.Option("--json", help="Emit vernier-report-v1 JSON (JCS)."),
+        typer.Option("--json", help="Print vernier-report-v1 JSON (JCS)."),
     ] = False,
 ) -> None:
-    """Live re-drive: LLM live, tools from the record; align and report.
+    """Live re-drive: new model talks, tools come from the record.
+
+    Aligns against the baseline and prints a human report (or JSON).
 
     Exit codes: 0 no divergence (severity NONE, no rules), 1 divergence,
     2 operational error.
@@ -350,7 +369,8 @@ def diff(
 
     if result.verdict.harness_fault:
         typer.echo(
-            f"vern diff: HARNESS_FAULT: {result.verdict.harness_fault}",
+            f"vern diff: HARNESS_FAULT: "
+            f"{_format_harness_fault_for_display(result.verdict.harness_fault)}",
             err=True,
         )
         raise typer.Exit(code=2)
@@ -372,61 +392,61 @@ def _has_replay_miss(agent_output: str) -> bool:
 def gate(
     run_id: Annotated[
         str | None,
-        typer.Argument(help="Run id to gate (omit with --corpus)."),
+        typer.Argument(help="Run id to gate (omit when using --corpus)."),
     ] = None,
     max_severity: Annotated[
         str,
         typer.Option(
             "--max-severity",
-            help="Fail if verdict severity is above this level.",
+            help="Fail the job if any run's severity is above this.",
         ),
     ] = "MEDIUM",
     corpus: Annotated[
         Path | None,
         typer.Option(
             "--corpus",
-            help="Directory of run folders (or scenario/run fixtures) to gate.",
+            help="Directory of run folders (or scenario/run fixtures).",
         ),
     ] = None,
     model: Annotated[
         str | None,
-        typer.Option("--model", help="Override model for live re-drives."),
+        typer.Option("--model", help="Candidate model id for live re-drives."),
     ] = None,
     baseline_model: Annotated[
         str | None,
         typer.Option(
             "--baseline-model",
-            help="Label for the recorded baseline model (report metadata only).",
+            help="Label for the recorded baseline model (report only).",
         ),
     ] = None,
     prompt_file: Annotated[
         Path | None,
-        typer.Option("--prompt-file", help="Override system prompt file."),
+        typer.Option("--prompt-file", help="Replace the system prompt from a file."),
     ] = None,
     fail_on_miss: Annotated[
         bool,
         typer.Option(
             "--fail-on-miss/--no-fail-on-miss",
-            help="Exit 2 when a hard ReplayMiss occurs during re-drive.",
+            help="Exit 2 when a hard ReplayMiss happens during re-drive.",
         ),
     ] = True,
     json_out: Annotated[
         Path | None,
         typer.Option(
             "--json-out",
-            help="Write vernier-gate-report-v1 JSON (JCS) to this path.",
+            help="Write vernier-gate-report-v1 JSON (JCS) here.",
         ),
     ] = None,
     comment_out: Annotated[
         Path | None,
         typer.Option(
             "--comment-out",
-            help="Write PR-comment markdown summary to this path.",
+            help="Write a PR-comment markdown summary here.",
         ),
     ] = None,
     runs_dir: Annotated[
         Path,
-        typer.Option("--runs-dir", help="Directory containing run folders."),
+        typer.Option("--runs-dir", help="Directory that holds run folders."),
     ] = DEFAULT_RUNS_DIR,
     index: Annotated[
         Path,
@@ -434,10 +454,12 @@ def gate(
     ] = DEFAULT_INDEX_PATH,
     out: Annotated[
         Path | None,
-        typer.Option("--out", help="Directory for live re-drive runs."),
+        typer.Option("--out", help="Where to write live re-drive runs."),
     ] = None,
 ) -> None:
-    """Gate a run (or corpus) by max severity after a live re-drive.
+    """CI gate: re-drive and fail if severity rises above your cap.
+
+    Example: ``vern gate --corpus testdata/verify --max-severity HIGH``
 
     Exit codes: 0 at or below threshold, 1 above, 2 operational error.
     """
@@ -516,7 +538,10 @@ def gate(
             + (" HARNESS_FAULT" if harness else "")
         )
         if harness:
-            typer.echo(f"  {result.verdict.harness_fault}", err=True)
+            typer.echo(
+                f"  {_format_harness_fault_for_display(result.verdict.harness_fault)}",
+                err=True,
+            )
         run_rows.append(
             {
                 "label": label,
@@ -578,13 +603,13 @@ def init_cmd(
     ] = Path("."),
     force: Annotated[
         bool,
-        typer.Option("--force", help="Overwrite existing vernier.toml / workflow."),
+        typer.Option("--force", help="Overwrite existing vernier.toml and workflow."),
     ] = False,
     action_ref: Annotated[
         str,
         typer.Option(
             "--action-ref",
-            help="GitHub Action uses: value (owner/repo@ref).",
+            help="GitHub Action ref, for example owner/repo@tag.",
         ),
     ] = "gautamtalksdev/Vernier@main",
     corpus_path: Annotated[
@@ -596,7 +621,7 @@ def init_cmd(
         typer.Option("--max-severity", help="Default max severity for the workflow."),
     ] = "MEDIUM",
 ) -> None:
-    """Scaffold vernier.toml and a .github/workflows vernier-gate example."""
+    """Write vernier.toml and a sample GitHub Actions gate workflow."""
     try:
         written = run_init(
             path,
@@ -622,7 +647,10 @@ def ls_cmd(
         typer.Option("--index", help="SQLite run index path."),
     ] = DEFAULT_INDEX_PATH,
 ) -> None:
-    """List runs from the SQLite index (index only; JSONL is source of truth)."""
+    """List runs from the SQLite index.
+
+    The index is a helper only. ``events.jsonl`` is the source of truth.
+    """
     rows = list_runs(index)
     if not rows:
         typer.echo("(no runs)")

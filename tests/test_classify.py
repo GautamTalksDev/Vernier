@@ -167,19 +167,22 @@ def test_merge_applied_ignores() -> None:
     assert by_ptr["/nonce"] == "a"
 
 
-def test_no_model_imports_in_classify_package() -> None:
-    root = Path(__file__).resolve().parents[1] / "src" / "vernier" / "classify"
+def test_no_model_imports_on_align_and_classify_path() -> None:
+    """No-model-in-the-loop: align + classify stay free of model/ML stacks."""
+    root = Path(__file__).resolve().parents[1] / "src" / "vernier"
     banned = (
         "openai",
         "anthropic",
         "embedding",
+        "similarity",
         "numpy",
         "sklearn",
         "torch",
         "transformers",
         "sentence_transformers",
     )
-    for path in root.rglob("*.py"):
-        text = path.read_text(encoding="utf-8").lower()
-        for token in banned:
-            assert token not in text, f"{path} mentions banned token {token!r}"
+    for pkg in ("align", "classify"):
+        for path in (root / pkg).rglob("*.py"):
+            text = path.read_text(encoding="utf-8").lower()
+            for token in banned:
+                assert token not in text, f"{path} mentions banned token {token!r}"

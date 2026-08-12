@@ -17,7 +17,7 @@ from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 
 import httpx
 
-from vern import tool
+from vernier.capture import tool
 
 
 @tool

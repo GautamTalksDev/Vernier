@@ -19,7 +19,7 @@ from _corpus_llm import (  # noqa: E402
     start_baseline_server,
 )
 
-from vern import tool  # noqa: E402
+from vernier.capture import tool  # noqa: E402
 
 
 @tool

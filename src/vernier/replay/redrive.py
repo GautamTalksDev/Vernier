@@ -64,6 +64,54 @@ def write_shim(run_dir: Path) -> Path:
     return shim_dir
 
 
+def capture_python_env(
+    *,
+    shim_dir: Path,
+    run_dir: Path,
+    run_id: str,
+    base_environ: dict[str, str] | None = None,
+    index_path: Path | None = None,
+    command: list[str] | None = None,
+    cwd: str | None = None,
+) -> dict[str, str]:
+    """Build a subprocess env where Vernier's sitecustomize cannot be hijacked.
+
+    Forces ``PYTHONSAFEPATH=1`` (no cwd on ``sys.path``) and puts ``shim_dir``
+    first on ``PYTHONPATH`` so a malicious ``./sitecustomize.py`` cannot win.
+    """
+    env = dict(base_environ) if base_environ is not None else os.environ.copy()
+    existing = env.get("PYTHONPATH", "")
+    parts = [str(shim_dir)]
+    for part in existing.split(os.pathsep):
+        if part and Path(part).resolve() != Path(shim_dir).resolve():
+            parts.append(part)
+    env["PYTHONPATH"] = os.pathsep.join(parts)
+    env["PYTHONSAFEPATH"] = "1"
+    env.pop("PYTHONNOUSERSITE", None)
+    env["VERNIER_RUN_DIR"] = str(Path(run_dir).resolve())
+    env["VERNIER_RUN_ID"] = run_id
+    if index_path is not None:
+        env["VERNIER_INDEX"] = str(Path(index_path).resolve())
+    if command is not None:
+        env["VERNIER_COMMAND_JSON"] = json.dumps(command)
+    if cwd is not None:
+        env["VERNIER_CWD"] = cwd
+    return env
+
+
+def with_python_safe_path_flag(command: list[str]) -> list[str]:
+    """Insert ``-P`` after a Python interpreter so cwd is not prepended."""
+    if not command:
+        return command
+    exe = command[0]
+    name = Path(exe).name.lower()
+    if name.startswith("python") or exe == sys.executable:
+        if len(command) > 1 and command[1] == "-P":
+            return list(command)
+        return [exe, "-P", *command[1:]]
+    return list(command)
+
+
 def index_beside(runs_dir: Path) -> Path:
     if runs_dir.name == "runs":
         return runs_dir.parent / "index.sqlite"
@@ -110,20 +158,16 @@ def redrive(
     shim_dir = write_shim(candidate_dir)
     index_path = index_beside(out_dir)
 
-    env = os.environ.copy()
-    existing = env.get("PYTHONPATH", "")
-    env["PYTHONPATH"] = (
-        str(shim_dir) if not existing else f"{shim_dir}{os.pathsep}{existing}"
+    env = capture_python_env(
+        shim_dir=shim_dir,
+        run_dir=candidate_dir,
+        run_id=candidate_id,
+        index_path=index_path,
+        command=command,
+        cwd=cwd,
     )
-    env["VERNIER_REPLAY_SOURCE"] = str(source_dir.resolve())
-    env["VERNIER_RUN_DIR"] = str(candidate_dir.resolve())
-    env["VERNIER_RUN_ID"] = candidate_id
-    env["VERNIER_INDEX"] = str(index_path.resolve())
-    env["VERNIER_COMMAND_JSON"] = json.dumps(command)
-    env["VERNIER_CWD"] = cwd
     env.pop("VERNIER_CAPTURE", None)
-    env.setdefault("PYTHONSAFEPATH", "")
-    env.pop("PYTHONNOUSERSITE", None)
+    env["VERNIER_REPLAY_SOURCE"] = str(source_dir.resolve())
 
     if mode == "live_diff":
         env["VERNIER_DIFF"] = "1"
@@ -152,7 +196,7 @@ def redrive(
         env.update(extra_env)
 
     completed = subprocess.run(
-        command,
+        with_python_safe_path_flag(command),
         env=env,
         cwd=cwd if Path(cwd).is_dir() else None,
         check=False,

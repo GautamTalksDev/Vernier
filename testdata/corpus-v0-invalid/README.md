@@ -1,5 +1,10 @@
 # KT-1 evaluation corpus
 
+**License:** [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/).
+
+> **Invalidated** for KT-1 scoring (scripted agents / harness confound). Kept for
+> audit history; see `docs/CORPUS-AUDIT.md`.
+
 Baseline model: `vernier-baseline-local-v1` (local deterministic stub).
 
 ## Layout

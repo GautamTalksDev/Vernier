@@ -55,7 +55,10 @@ def render_human(
     lines.append(f"  source    {escape_untrusted(source_run_id)}")
     lines.append(f"  candidate {escape_untrusted(candidate_run_id)}")
     lines.append(f"  severity  {sev_color}{sev}{c['reset']}")
-    rules = ", ".join(verdict.rule_ids) if verdict.rule_ids else "(none)"
+    if verdict.rule_ids:
+        rules = ", ".join(escape_untrusted(r) for r in verdict.rule_ids)
+    else:
+        rules = "(none)"
     lines.append(f"  rules     {rules}")
     if verdict.harness_fault:
         lines.append(
@@ -66,7 +69,10 @@ def render_human(
     if verdict.applied_ignores:
         lines.append("  ignores")
         for ign in verdict.applied_ignores:
-            lines.append(f"    - {ign.mechanism} {ign.pointer} ({ign.side})")
+            lines.append(
+                f"    - {escape_untrusted(ign.mechanism)} "
+                f"{escape_untrusted(ign.pointer)} ({escape_untrusted(ign.side)})"
+            )
     else:
         lines.append("  ignores   (none)")
 
@@ -110,5 +116,5 @@ def _fmt_event(traj: list[TrajectoryEvent], idx: int | None) -> str:
     if ev.kind == "ToolResult":
         return "ToolResult:error" if ev.is_error else "ToolResult:ok"
     if ev.kind == "Terminal":
-        return f"Terminal:{ev.terminal_kind or '?'}"[:36]
+        return f"Terminal:{escape_untrusted(ev.terminal_kind or '?')}"[:36]
     return escape_untrusted(ev.kind)[:36]

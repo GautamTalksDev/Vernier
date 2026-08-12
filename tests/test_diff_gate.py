@@ -342,3 +342,6 @@ def test_help_prints_network_guarantee() -> None:
     assert proc.returncode == 0
     assert "ZERO network requests" in proc.stdout
     assert "No telemetry" in proc.stdout
+    assert "no version check" in proc.stdout
+    assert "no analytics" in proc.stdout
+    assert "no phone-home" in proc.stdout

@@ -1,5 +1,7 @@
 # SPEC-DIVERGENCE — divergence-v1
 
+**License:** [CC0 1.0 Universal](https://creativecommons.org/publicdomain/zero/1.0/)
+(public domain dedication).  
 **Version:** `divergence-v1`  
 **Status:** normative for Vernier classification  
 **Audience:** an engineer implementing the classifier without reading Vernier source

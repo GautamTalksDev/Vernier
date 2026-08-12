@@ -92,11 +92,19 @@ def list_runs(index_path: Path) -> list[RunIndexRow]:
 
 
 def resolve_run_dir(run_id: str, *, runs_dir: Path, index_path: Path) -> Path:
-    """Resolve a run directory from the index, falling back to runs_dir/run_id."""
+    """Resolve a run directory from the index, falling back to runs_dir/run_id.
+
+    Resolved paths are confined under ``runs_dir`` so a poisoned index or a
+    traversal ``run_id`` cannot escape ``.vernier/``.
+    """
+    from vernier.record.store import confine_path, validate_run_id
+
+    runs_dir = Path(runs_dir)
     for row in list_runs(index_path):
         if row.run_id == run_id:
-            return Path(row.path)
-    candidate = Path(runs_dir) / run_id
+            return confine_path(Path(row.path), runs_dir)
+    validate_run_id(run_id)
+    candidate = confine_path(Path(runs_dir) / run_id, runs_dir)
     if candidate.exists():
         return candidate
     raise FileNotFoundError(f"unknown run_id: {run_id}")

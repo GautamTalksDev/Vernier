@@ -1,12 +1,14 @@
 # Security Policy
 
-## Supported Versions
+You found a problem that could hurt someone running Vernier. Thank you. Please tell us privately.
 
-Security fixes are applied to the latest release on the default branch.
+## Supported versions
 
-## Reporting a Vulnerability
+Security fixes go to the latest release on the default branch.
 
-Do not open a public issue for security vulnerabilities.
+## Reporting a vulnerability
+
+Do not open a public issue.
 
 Email the maintainers with:
 
@@ -15,6 +17,8 @@ Email the maintainers with:
 - impact assessment, if known
 - any suggested fix
 
-You should receive an acknowledgement within a few business days. Please give
-us a reasonable window to investigate and ship a fix before any public
-disclosure.
+You should get an acknowledgement within a few business days. Give us a reasonable window to investigate and ship a fix before any public disclosure.
+
+## What we treat as hostile
+
+Recorded runs, provider responses, and `vernier.toml` from a cloned repo are untrusted input. See [docs/THREAT-MODEL.md](docs/THREAT-MODEL.md) for boundaries and limits.

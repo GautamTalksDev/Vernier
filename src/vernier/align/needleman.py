@@ -21,6 +21,9 @@ from enum import IntEnum
 from vernier.align.costs import AlignCosts, load_costs
 from vernier.align.types import AlignedPair, AlignEvent, Relation
 
+# Absolute ceiling — costs files / vernier.toml cannot raise this.
+HARD_MAX_EVENTS = 5000
+
 
 class AlignmentTooLongError(ValueError):
     """Raised when either sequence exceeds the configured max length."""
@@ -50,10 +53,11 @@ def align(
 
     n = len(a)
     m = len(b)
-    if n > costs.max_events or m > costs.max_events:
+    limit = min(int(costs.max_events), HARD_MAX_EVENTS)
+    if n > limit or m > limit:
         raise AlignmentTooLongError(
             f"refusing to align runs of length {n} and {m}; "
-            f"max_events={costs.max_events}"
+            f"max_events={limit}"
         )
 
     # score[i][j] = best score aligning a[:i] with b[:j]

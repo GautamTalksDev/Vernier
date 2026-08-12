@@ -70,9 +70,10 @@ def load_costs(path: Path | None = None) -> AlignCosts:
         pairs[(left, right)] = int(value)
 
     meta = dict(data.get("meta", {}))
+    max_events = min(int(meta.get("max_events", 5000)), 5000)
     return AlignCosts(
         version=str(data["version"]),
-        max_events=int(meta.get("max_events", 5000)),
+        max_events=max_events,
         gap=int(data["gap"]["score"]),
         match=match,
         mismatch_default=int(data["mismatch"]["default"]),

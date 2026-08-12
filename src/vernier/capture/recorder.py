@@ -14,7 +14,7 @@ from vernier.capture.bodies import (
     check_body_size,
     digest_raw,
 )
-from vernier.capture.redaction import redact_headers
+from vernier.capture.redaction import redact_body_bytes, redact_headers, redact_url
 from vernier.record.schema import EventKind
 from vernier.record.store import RecordStore
 
@@ -171,14 +171,16 @@ def record_http_request(
     body: bytes,
 ) -> None:
     try:
-        exceeds, size = check_body_size(body)
+        safe_url = redact_url(url)
+        safe_body = redact_body_bytes(body)
+        exceeds, size = check_body_size(safe_body)
         redacted = redact_headers(headers)
         if exceeds:
             payload = {
                 "channel": "http",
                 "phase": "request",
                 "method": method,
-                "url": url,
+                "url": safe_url,
                 "headers": redacted,
                 "body_truncated": True,
                 "body_size": size,
@@ -201,18 +203,18 @@ def record_http_request(
             "channel": "http",
             "phase": "request",
             "method": method,
-            "url": url,
+            "url": safe_url,
             "headers": redacted,
             "body_truncated": False,
             "body_size": size,
-            "body_digest": body_digest(body),
+            "body_digest": body_digest(safe_body),
         }
         safe_append(
             store,
             seq=seq,
             kind=EventKind.LLM_REQUEST,
             payload=payload,
-            blob_data=body,
+            blob_data=safe_body,
         )
     except Exception as exc:  # noqa: BLE001
         emit_capture_gap(
@@ -233,7 +235,8 @@ def record_http_response(
     chunks: list[bytes] | None,
 ) -> None:
     try:
-        exceeds, size = check_body_size(body)
+        safe_body = redact_body_bytes(body)
+        exceeds, size = check_body_size(safe_body)
         redacted = redact_headers(headers)
         stream_meta: list[dict[str, Any]] = []
         if chunks is not None:
@@ -282,7 +285,7 @@ def record_http_response(
             "headers": redacted,
             "body_truncated": False,
             "body_size": size,
-            "body_digest": body_digest(body),
+            "body_digest": body_digest(safe_body),
             "stream": chunks is not None,
             "chunks": stream_meta,
         }
@@ -292,7 +295,7 @@ def record_http_response(
             kind=EventKind.LLM_RESPONSE,
             payload=payload,
             logical_parent_seq=request_seq,
-            blob_data=body,
+            blob_data=safe_body,
         )
     except Exception as exc:  # noqa: BLE001
         emit_capture_gap(

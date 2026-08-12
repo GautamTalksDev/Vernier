@@ -21,25 +21,27 @@ from vernier.record.store import (
 )
 
 
-def test_10000_events_root_digest_and_corruption(tmp_path: Path) -> None:
+def test_max_events_root_digest_and_corruption(tmp_path: Path) -> None:
+    from vernier.record.store import MAX_EVENTS
+
     run_dir = tmp_path / "runs" / "big"
     index = tmp_path / "index.sqlite"
     store = RecordStore(run_dir, "big", index_path=index)
-    for i in range(10_000):
+    for i in range(MAX_EVENTS):
         store.append_event(
             seq=store.next_seq(),
             kind=EventKind.LLM_REQUEST,
             payload={"i": i, "msg": "hello"},
         )
     manifest = store.finalize()
-    assert manifest.event_count == 10_000
+    assert manifest.event_count == MAX_EVENTS
 
     result = verify_run(run_dir)
     assert result.ok, result.errors
 
     frozen = load_run(run_dir)
     assert isinstance(frozen, FrozenRun)
-    assert len(frozen.events) == 10_000
+    assert len(frozen.events) == MAX_EVENTS
     assert frozen.manifest.root_digest == manifest.root_digest
 
     events_path = run_dir / "events.jsonl"

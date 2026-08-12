@@ -285,7 +285,7 @@ def test_vern_record_simple_agent_zero_edit(tmp_path: Path) -> None:
 
 
 def test_tool_decorator_records_local_call(record_dir: Path) -> None:
-    from vern import tool
+    from vernier.capture import tool
 
     store = _activate(record_dir)
 
@@ -301,7 +301,7 @@ def test_tool_decorator_records_local_call(record_dir: Path) -> None:
 
 
 def test_wrap_tools_registry(record_dir: Path) -> None:
-    from vern import wrap_tools
+    from vernier.capture import wrap_tools
 
     _activate(record_dir)
 
