@@ -1,5 +1,5 @@
 [project]
-name = "vernier"
+name = "vernier-cli"
 version = "0.0.1a1"
 description = "Deterministic capture, replay, and divergence classification for agent runs."
 readme = "README.md"

@@ -784,7 +784,7 @@ wheels = [
 ]
 
 [[package]]
-name = "vernier"
+name = "vernier-cli"
 version = "0.0.1a1"
 source = { editable = "." }
 dependencies = [
